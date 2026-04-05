@@ -1,26 +1,26 @@
 # 01 — Requirements & Specification
-**Dự án:** Online Music Streaming System with AI Personalization
-**Thị trường:** Việt Nam
-**Phạm vi:** Web Application (Local Deployment)
-**Phiên bản tài liệu:** 1.0
-**Ngày:** 2026-03-28
+**Project:** Online Music Streaming System with AI Personalization
+**Market:** Vietnam
+**Scope:** Web Application (Local Deployment)
+**Document Version:** 1.0
+**Date:** 2026-03-28
 
 ---
 
-## 1. Tổng Quan Hệ Thống
+## 1. System Overview
 
-Hệ thống streaming nhạc trực tuyến cho phép người dùng nghe nhạc, khám phá nội dung, và nhận gợi ý âm nhạc được cá nhân hóa bởi AI. Nghệ sĩ có thể tự upload và quản lý nội dung. Admin kiểm duyệt nội dung trước khi xuất bản.
+An online music streaming platform that allows users to listen to music, discover content, and receive AI-personalized music recommendations. Artists can upload and manage their own content. Admins moderate content before it is published.
 
 ---
 
-## 2. Vai Trò Người Dùng (User Roles)
+## 2. User Roles
 
-| Vai trò | Mô tả |
-|--------|-------|
-| **Guest** | Người dùng chưa đăng nhập. Có thể nghe nhạc và xem thông tin công khai nhưng không có tính năng cá nhân hóa |
-| **User** | Người dùng đã đăng ký. Có đầy đủ tính năng: playlist, liked songs, AI recommendations, follow artist, donate |
-| **Artist** | Tài khoản nghệ sĩ. Có thể upload nhạc, quản lý bài hát của mình, xem thống kê lượt nghe, nhận donate |
-| **Admin** | Quản trị viên hệ thống. Duyệt nội dung, quản lý user, xem analytics toàn hệ thống |
+| Role | Description |
+|------|-------------|
+| **Guest** | Unauthenticated user. Can listen to music and view public information, but no personalization features |
+| **User** | Registered user. Full feature access: playlists, liked songs, AI recommendations, follow artists, donate |
+| **Artist** | Artist account. Can upload music, manage their songs, view play statistics, receive donations |
+| **Admin** | System administrator. Approves content, manages users, views system-wide analytics |
 
 ---
 
@@ -28,236 +28,236 @@ Hệ thống streaming nhạc trực tuyến cho phép người dùng nghe nhạ
 
 ### 3.1 Authentication & User Account
 
-| ID | Yêu cầu | Vai trò |
-|----|---------|---------|
-| AUTH-01 | Đăng ký tài khoản User bằng email + password | Guest |
-| AUTH-02 | Đăng ký tài khoản Artist (quy trình riêng biệt) | Guest |
-| AUTH-03 | Đăng nhập / Đăng xuất | User, Artist, Admin |
-| AUTH-04 | Gửi email xác nhận tài khoản sau khi đăng ký | Hệ thống |
-| AUTH-05 | Quản lý hồ sơ cá nhân (avatar, tên hiển thị, bio) | User, Artist |
-| AUTH-06 | Onboarding chọn sở thích âm nhạc khi đăng ký lần đầu | User mới |
+| ID | Requirement | Role |
+|----|-------------|------|
+| AUTH-01 | Register a User account with email + password | Guest |
+| AUTH-02 | Register an Artist account (separate flow) | Guest |
+| AUTH-03 | Login / Logout | User, Artist, Admin |
+| AUTH-04 | Send account confirmation email after registration | System |
+| AUTH-05 | Manage personal profile (avatar, display name, bio) | User, Artist |
+| AUTH-06 | Onboarding — select music preferences on first registration | New User |
 
-> **Onboarding flow:** Sau khi xác nhận email, User mới được dẫn qua một loạt câu hỏi để xác định sở thích (thể loại nhạc, nghệ sĩ yêu thích, mood...). Dữ liệu này là input khởi đầu cho AI recommendation.
+> **Onboarding flow:** After email confirmation, new Users go through a series of questions to identify preferences (genres, favorite artists, mood...). This data is the initial input for AI recommendations.
 
 ---
 
 ### 3.2 Music Player
 
-| ID | Yêu cầu |
-|----|---------|
-| PLAY-01 | Stream nhạc trực tuyến (không hỗ trợ offline/download) |
-| PLAY-02 | Chất lượng âm thanh cố định: 128kbps |
-| PLAY-03 | Các nút điều khiển cơ bản: Play, Pause, Next, Previous, Seek |
-| PLAY-04 | Chế độ Shuffle (ngẫu nhiên) và Repeat (lặp 1 bài / lặp playlist) |
-| PLAY-05 | Điều chỉnh âm lượng |
-| PLAY-06 | Hiển thị lyrics đồng bộ theo thời gian thực (synced LRC format) |
-| PLAY-07 | Tính năng Crossfade giữa các bài hát |
-| PLAY-08 | Equalizer tùy chỉnh âm thanh |
-| PLAY-09 | Sleep Timer (tự dừng nhạc sau X phút) |
-| PLAY-10 | Tính năng Radio: tự động phát nhạc tương tự bài đang nghe (xem mục 3.6) |
+| ID | Requirement |
+|----|-------------|
+| PLAY-01 | Stream music online (no offline/download support) |
+| PLAY-02 | Fixed audio quality: 128kbps |
+| PLAY-03 | Basic controls: Play, Pause, Next, Previous, Seek |
+| PLAY-04 | Shuffle (random) and Repeat (single track / entire playlist) modes |
+| PLAY-05 | Volume control |
+| PLAY-06 | Display real-time synced lyrics (synced LRC format) |
+| PLAY-07 | Crossfade between songs |
+| PLAY-08 | Equalizer for audio customization |
+| PLAY-09 | Sleep Timer (auto-stop music after X minutes) |
+| PLAY-10 | Radio mode: automatically play songs similar to the current track (see section 3.6) |
 
-> **Ghi chú Lyrics:** File lyrics lưu dạng synced LRC (`.lrc`) — format chuẩn có timestamp theo từng dòng, hỗ trợ highlight đúng dòng lời theo tiến trình bài hát.
+> **Lyrics note:** Lyrics files are stored in synced LRC (`.lrc`) format — a standard format with per-line timestamps, supporting highlight of the correct lyric line in sync with playback progress.
 
 ---
 
-### 3.3 Thư Viện & Nội Dung
+### 3.3 Music Library & Content
 
-| ID | Yêu cầu |
-|----|---------|
-| LIB-01 | Trang thông tin bài hát (tên, nghệ sĩ, album, thể loại, năm, thời lượng, lượt nghe) |
-| LIB-02 | Trang thông tin nghệ sĩ (bio, ảnh, danh sách bài hát, tổng lượt nghe) |
-| LIB-03 | Trang thông tin album (bìa, danh sách bài hát) |
-| LIB-04 | Hiển thị lượt nghe cho từng bài hát (công khai với tất cả người dùng) |
+| ID | Requirement |
+|----|-------------|
+| LIB-01 | Song detail page (name, artist, album, genre, year, duration, play count) |
+| LIB-02 | Artist detail page (bio, photo, song list, total play count) |
+| LIB-03 | Album detail page (cover art, song list) |
+| LIB-04 | Display play count per song (publicly visible to all users) |
 
 ---
 
 ### 3.4 Playlist & Liked Songs
 
-| ID | Yêu cầu | Vai trò |
-|----|---------|---------|
-| PL-01 | User tạo, đặt tên, chỉnh sửa, xóa playlist cá nhân | User |
-| PL-02 | Thêm / xóa bài hát khỏi playlist | User |
-| PL-03 | Tính năng "Liked Songs" — thư viện yêu thích cá nhân | User |
-| PL-04 | Hệ thống tự động tạo playlist BXH (Top Charts) theo ngày / tuần / tháng | Hệ thống |
-| PL-05 | Không hỗ trợ collaborative playlist | — |
+| ID | Requirement | Role |
+|----|-------------|------|
+| PL-01 | User can create, name, edit, and delete personal playlists | User |
+| PL-02 | Add / remove songs from a playlist | User |
+| PL-03 | "Liked Songs" feature — personal favorites library | User |
+| PL-04 | System auto-generates Top Charts playlists (daily / weekly / monthly) | System |
+| PL-05 | Collaborative playlists are not supported | — |
 
 ---
 
-### 3.5 Tìm Kiếm & Khám Phá
+### 3.5 Search & Discovery
 
-| ID | Yêu cầu |
-|----|---------|
-| SEARCH-01 | Tìm kiếm theo: tên bài hát, tên nghệ sĩ, tên album, thể loại |
-| SEARCH-02 | Kết quả tìm kiếm phân nhóm rõ ràng (Bài hát / Nghệ sĩ / Album) |
-| SEARCH-03 | Trang BXH (Charts): hiển thị top bài hát theo ngày / tuần / tháng |
+| ID | Requirement |
+|----|-------------|
+| SEARCH-01 | Search by: song name, artist name, album name, genre |
+| SEARCH-02 | Search results clearly grouped (Songs / Artists / Albums) |
+| SEARCH-03 | Charts page: display top songs by day / week / month |
 
 ---
 
 ### 3.6 AI & Personalization
 
-#### Dữ liệu hành vi thu thập (phục vụ AI)
+#### Behavioral Data Collected (for AI)
 
-| Loại dữ liệu | Chi tiết |
-|--------------|---------|
-| Lịch sử nghe | Bài nào được nghe, thời điểm nghe |
-| Hành vi tương tác | Like, Dislike (feedback trực tiếp) |
-| Hành vi skip | Bài bị skip sớm (< 30 giây) |
-| Thời gian nghe | Nghe được bao nhiêu % bài hát |
-| Sở thích onboarding | Dữ liệu từ bước chọn sở thích ban đầu |
-| Follow Artist | Nghệ sĩ user đang follow |
+| Data Type | Details |
+|-----------|---------|
+| Play history | Which songs were played and when |
+| Interaction behavior | Like, Dislike (direct feedback) |
+| Skip behavior | Songs skipped early (< 30 seconds) |
+| Listening duration | Percentage of song listened to |
+| Onboarding preferences | Data from initial preference selection step |
+| Followed artists | Artists the user is following |
 
-#### Tính năng AI
+#### AI Features
 
-| ID | Tính năng | Mô tả |
-|----|-----------|-------|
-| AI-01 | **Homepage Personalization** | Trang chủ hiển thị mục "Gợi ý cho bạn" dựa trên lịch sử nghe và sở thích. User A hay nghe Indie → ưu tiên nghệ sĩ Indie. User B hay nghe V-Pop → ưu tiên V-Pop |
-| AI-02 | **Radio Thông Minh** | Từ 1 bài hát, tự phát các bài tương tự dựa trên: thể loại, BPM, mood của bài đang nghe + sở thích cá nhân của user. Ví dụ: đang nghe ballad V-Pop → Radio phát tiếp ballad V-Pop user từng thích |
-| AI-03 | **User Feedback** | Nút "Không thích" để user loại bỏ thể loại / nghệ sĩ khỏi gợi ý — AI cập nhật preference |
-| AI-04 | **Onboarding Cold Start** | Với user mới chưa có lịch sử, dùng dữ liệu onboarding để khởi tạo recommendation profile ban đầu |
+| ID | Feature | Description |
+|----|---------|-------------|
+| AI-01 | **Homepage Personalization** | Homepage shows a "Recommended for you" section based on play history and preferences. User A who listens to Indie → prioritize Indie artists. User B who listens to V-Pop → prioritize V-Pop |
+| AI-02 | **Smart Radio** | From 1 song, automatically plays similar songs based on: genre, BPM, mood of the current track + user's personal preferences. Example: listening to V-Pop ballad → Radio continues with V-Pop ballads the user has liked |
+| AI-03 | **User Feedback** | "Dislike" button so users can remove a genre/artist from suggestions — AI updates the preference |
+| AI-04 | **Onboarding Cold Start** | For new users with no history, use onboarding data to initialize the initial recommendation profile |
 
-#### Hướng tiếp cận AI đề xuất
+#### Recommended AI Approaches
 
-| Phương pháp | Ứng dụng |
-|------------|---------|
-| **Content-based Filtering** | Gợi ý bài hát dựa trên đặc trưng metadata (genre, BPM, mood, key) của những bài user đã thích |
-| **Collaborative Filtering** | Gợi ý dựa trên hành vi của những user có sở thích tương tự |
-| **Hybrid Approach** | Kết hợp cả hai — Content-based cho cold start, dần chuyển sang Collaborative khi có đủ dữ liệu |
+| Method | Application |
+|--------|-------------|
+| **Content-based Filtering** | Recommend songs based on metadata features (genre, BPM, mood, key) of songs the user has liked |
+| **Collaborative Filtering** | Recommend based on behavior of users with similar tastes |
+| **Hybrid Approach** | Combine both — Content-based for cold start, gradually shift to Collaborative as more data accumulates |
 
 ---
 
-### 3.7 Tính Năng Xã Hội
+### 3.7 Social Features
 
-| ID | Yêu cầu | Vai trò |
-|----|---------|---------|
+| ID | Requirement | Role |
+|----|-------------|------|
 | SOC-01 | Follow / Unfollow Artist | User |
-| SOC-02 | Xem danh sách Artist đang follow | User |
-| SOC-03 | Không có follow user khác, không có activity feed, không chia sẻ mạng xã hội ngoài | — |
+| SOC-02 | View list of followed Artists | User |
+| SOC-03 | No user-to-user follows, no activity feed, no external social sharing | — |
 
 ---
 
-### 3.8 Donate / Tip cho Artist
+### 3.8 Donate / Tip for Artists
 
-| ID | Yêu cầu |
-|----|---------|
-| DON-01 | User có thể donate/tip tiền trực tiếp cho Artist |
-| DON-02 | Hỗ trợ thanh toán qua **VNPay** (thị trường Việt Nam) |
-| DON-03 | Hỗ trợ thanh toán qua **Stripe** (thẻ quốc tế) |
-| DON-04 | Hiển thị lịch sử donate cho User |
-| DON-05 | Artist xem được tổng số tiền nhận được |
+| ID | Requirement |
+|----|-------------|
+| DON-01 | User can donate/tip money directly to an Artist |
+| DON-02 | Payment via **VNPay** (Vietnamese market) |
+| DON-03 | Payment via **Stripe** (international cards) |
+| DON-04 | Display donation history for User |
+| DON-05 | Artist can view total amount received |
 
 ---
 
 ### 3.9 Artist Dashboard
 
-| ID | Yêu cầu |
-|----|---------|
-| ART-01 | Artist đăng ký tài khoản riêng biệt (không dùng tài khoản User thông thường) |
-| ART-02 | Upload bài hát kèm metadata: tên, album, thể loại, năm, BPM, mood, key, file nhạc, file lyrics (.lrc), ảnh bìa |
-| ART-03 | Bài hát upload xong ở trạng thái **"Chờ duyệt"** — chưa hiển thị lên hệ thống |
-| ART-04 | Sau khi Admin duyệt → bài hát chuyển sang **"Đã xuất bản"** và hiển thị công khai |
-| ART-05 | Artist quản lý danh sách bài hát của mình (xem, chỉnh sửa metadata, gỡ xuống) |
-| ART-06 | Artist xem thống kê: lượt nghe từng bài, tổng lượt nghe, lượt nghe theo thời gian |
-| ART-07 | Artist xem tổng số tiền nhận được từ donate |
+| ID | Requirement |
+|----|-------------|
+| ART-01 | Artist registers a separate account (not a regular User account) |
+| ART-02 | Upload songs with metadata: name, album, genre, year, BPM, mood, key, audio file, lyrics file (.lrc), cover image |
+| ART-03 | Uploaded songs start with status **"Pending"** — not yet visible on the platform |
+| ART-04 | After Admin approval → song moves to **"Published"** and becomes publicly visible |
+| ART-05 | Artist manages their song list (view, edit metadata, take down) |
+| ART-06 | Artist views statistics: play count per song, total play count, play count over time |
+| ART-07 | Artist views total amount received from donations |
 
 ---
 
 ### 3.10 Admin Panel
 
-| ID | Yêu cầu |
-|----|---------|
-| ADM-01 | Xem danh sách bài hát đang **"Chờ duyệt"** từ Artist |
-| ADM-02 | Duyệt (Approve) hoặc Từ chối (Reject) bài hát kèm lý do |
-| ADM-03 | Quản lý User: xem danh sách, khoá / mở khoá tài khoản |
-| ADM-04 | Quản lý Artist: xem danh sách, khoá / mở khoá tài khoản |
-| ADM-05 | Xoá bài hát vi phạm khỏi hệ thống |
-| ADM-06 | Dashboard analytics: tổng số user, tổng lượt nghe, bài hát phổ biến nhất, nghệ sĩ nổi bật |
-| ADM-07 | Admin **không** có chức năng upload nhạc trực tiếp |
+| ID | Requirement |
+|----|-------------|
+| ADM-01 | View list of songs **"Pending"** approval from Artists |
+| ADM-02 | Approve or Reject songs with a reason |
+| ADM-03 | Manage Users: view list, lock / unlock accounts |
+| ADM-04 | Manage Artists: view list, lock / unlock accounts |
+| ADM-05 | Delete violating songs from the system |
+| ADM-06 | Analytics dashboard: total users, total plays, most popular songs, featured artists |
+| ADM-07 | Admin does **not** have the ability to upload music directly |
 
 ---
 
 ### 3.11 Notifications
 
-| ID | Yêu cầu |
-|----|---------|
-| NOTIF-01 | Gửi email xác nhận khi đăng ký tài khoản thành công |
-| NOTIF-02 | Gửi email thông báo kết quả duyệt bài hát cho Artist (Approved / Rejected + lý do) |
-| NOTIF-03 | Không có push notification trên trình duyệt |
+| ID | Requirement |
+|----|-------------|
+| NOTIF-01 | Send confirmation email when account registration is successful |
+| NOTIF-02 | Send email to Artist with song review result (Approved / Rejected + reason) |
+| NOTIF-03 | No browser push notifications |
 
 ---
 
 ## 4. Non-Functional Requirements
 
-| Hạng mục | Yêu cầu |
-|---------|---------|
-| **Quy mô** | ~100 người dùng đồng thời (dự án cá nhân, lưu hành nội bộ) |
-| **Deployment** | Chạy trên máy local, không yêu cầu uptime SLA |
-| **Nền tảng** | Web Application — không có Mobile App |
-| **Ngôn ngữ giao diện** | Tiếng Việt là chính |
-| **Thị trường** | Việt Nam |
-| **Bảo mật** | Xác thực JWT, HTTPS, mã hoá password (bcrypt) |
-| **Lưu trữ file** | Audio files lưu trên AWS S3 |
-| **Compliance** | Không yêu cầu tuân thủ GDPR / PDPA |
-| **Audio quality** | 128kbps MP3 (1 mức cố định) |
-| **Offline** | Không hỗ trợ |
+| Category | Requirement |
+|----------|-------------|
+| **Scale** | ~100 concurrent users (personal project, internal use) |
+| **Deployment** | Runs on local machine, no SLA uptime requirement |
+| **Platform** | Web Application — no Mobile App |
+| **UI Language** | Vietnamese as primary |
+| **Market** | Vietnam |
+| **Security** | JWT authentication, HTTPS, password encryption (bcrypt) |
+| **File Storage** | Audio files stored on AWS S3 |
+| **Compliance** | No GDPR / PDPA compliance required |
+| **Audio quality** | 128kbps MP3 (single fixed quality) |
+| **Offline** | Not supported |
 
 ---
 
-## 5. Luồng Nghiệp Vụ Quan Trọng
+## 5. Key Business Flows
 
-### 5.1 Luồng Upload Nhạc (Artist)
+### 5.1 Music Upload Flow (Artist)
 ```
-Artist upload bài hát + metadata
+Artist uploads song + metadata
         ↓
-Trạng thái: "Chờ duyệt" (không hiển thị công khai)
+Status: "Pending" (not publicly visible)
         ↓
-Admin nhận thông báo → Xem xét nội dung
+Admin receives notification → Reviews content
         ↓
-     [Duyệt]              [Từ chối]
+     [Approve]              [Reject]
         ↓                     ↓
-Trạng thái: "Đã xuất bản"   Email thông báo lý do → Artist
-Hiển thị lên hệ thống
+Status: "Published"        Email with reason → Artist
+Publicly visible on platform
 ```
 
-### 5.2 Luồng Onboarding User Mới
+### 5.2 New User Onboarding Flow
 ```
-Đăng ký email + password
+Register email + password
         ↓
-Xác nhận email (click link trong mail)
+Verify email (click link in email)
         ↓
-Onboarding: trả lời bộ câu hỏi sở thích
-(thể loại yêu thích, nghệ sĩ yêu thích, mood...)
+Onboarding: answer preference questionnaire
+(favorite genres, favorite artists, mood...)
         ↓
-Hệ thống tạo AI preference profile ban đầu
+System creates initial AI preference profile
         ↓
-Chuyển đến Homepage với gợi ý cá nhân hóa
+Redirect to personalized Homepage
 ```
 
-### 5.3 Luồng Donate
+### 5.3 Donate Flow
 ```
-User vào trang Artist → Nhấn "Donate"
+User visits Artist page → Clicks "Donate"
         ↓
-Nhập số tiền
+Enter amount
         ↓
-Chọn phương thức: VNPay / Stripe
+Select payment method: VNPay / Stripe
         ↓
-Xử lý thanh toán (redirect sang cổng)
+Process payment (redirect to payment gateway)
         ↓
-Kết quả: Thành công / Thất bại
+Result: Success / Failure
         ↓
-Cập nhật số dư donate hiển thị trên Artist dashboard
+Update donation total displayed on Artist dashboard
 ```
 
 ---
 
-## 6. Out of Scope (Ngoài phạm vi)
+## 6. Out of Scope
 
-- Nghe nhạc offline / download
-- Gói Premium / Subscription
+- Offline listening / download
+- Premium / Subscription plans
 - Mobile App (iOS / Android)
-- Collaborative Playlist
-- Chia sẻ lên mạng xã hội
-- Push Notification trên trình duyệt
-- Tính năng Browse / Khám phá theo mood / thời đại
-- Follow giữa các User thông thường
+- Collaborative Playlists
+- Social media sharing
+- Browser push notifications
+- Browse / Discover by mood / era
+- User-to-user follows
 - Livestream / Podcast
-- Bản quyền âm nhạc thương mại (dự án nội bộ)
+- Commercial music licensing (internal project)

@@ -1,24 +1,24 @@
 # 05 — Database Design
-**Dự án:** Online Music Streaming System with AI Personalization
+**Project:** Online Music Streaming System with AI Personalization
 **Database:** PostgreSQL 15
 **ORM:** Prisma
-**Phiên bản tài liệu:** 1.0
-**Ngày:** 2026-03-28
+**Document Version:** 1.0
+**Date:** 2026-03-28
 
 ---
 
-## 1. Tổng Quan
+## 1. Overview
 
-| Thống kê | Giá trị |
-|----------|---------|
-| Số bảng | 14 |
-| Database chính | PostgreSQL |
-| Cache / Queue | Redis (không lưu persistent data) |
-| File storage | AWS S3 (URL được lưu trong DB) |
+| Stat | Value |
+|------|-------|
+| Number of tables | 14 |
+| Main database | PostgreSQL |
+| Cache / Queue | Redis (no persistent data stored) |
+| File storage | AWS S3 (URLs stored in DB) |
 
 ---
 
-## 2. Sơ Đồ Quan Hệ (ERD — Dạng Text)
+## 2. Entity Relationship Diagram (Text Format)
 
 ```
 users ──────────────────── artists (1:1)
@@ -38,22 +38,22 @@ users ──────────────────── artists (1:1)
 
 ---
 
-## 3. Chi Tiết Từng Bảng
+## 3. Table Details
 
 ---
 
-### 3.1 `users` — Tài khoản người dùng
+### 3.1 `users` — User accounts
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
 | `id` | UUID | PK | |
 | `email` | VARCHAR(255) | UNIQUE, NOT NULL | |
 | `password_hash` | VARCHAR(255) | NOT NULL | bcrypt hash |
 | `role` | ENUM | NOT NULL | `user` / `artist` / `admin` |
-| `display_name` | VARCHAR(100) | NOT NULL | Tên hiển thị |
-| `avatar_url` | TEXT | NULLABLE | S3 URL ảnh đại diện |
-| `is_verified` | BOOLEAN | DEFAULT false | Email đã xác nhận chưa |
-| `is_active` | BOOLEAN | DEFAULT true | Admin có thể khoá tài khoản |
+| `display_name` | VARCHAR(100) | NOT NULL | Display name |
+| `avatar_url` | TEXT | NULLABLE | S3 URL of profile picture |
+| `is_verified` | BOOLEAN | DEFAULT false | Whether email is confirmed |
+| `is_active` | BOOLEAN | DEFAULT true | Admin can lock accounts |
 | `created_at` | TIMESTAMP | DEFAULT NOW() | |
 | `updated_at` | TIMESTAMP | AUTO UPDATE | |
 
@@ -61,118 +61,118 @@ users ──────────────────── artists (1:1)
 
 ---
 
-### 3.2 `artists` — Thông tin nghệ sĩ
+### 3.2 `artists` — Artist profiles
 
-> Quan hệ 1:1 với `users` (chỉ user có role = 'artist' mới có record này)
+> 1:1 relationship with `users` (only users with role = 'artist' have a record here)
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
 | `id` | UUID | PK | |
 | `user_id` | UUID | FK → users.id, UNIQUE | |
-| `bio` | TEXT | NULLABLE | Giới thiệu nghệ sĩ |
-| `total_earnings` | DECIMAL(10,2) | DEFAULT 0 | Tổng tiền nhận từ donate |
+| `bio` | TEXT | NULLABLE | Artist bio |
+| `total_earnings` | DECIMAL(10,2) | DEFAULT 0 | Total donations received |
 | `created_at` | TIMESTAMP | DEFAULT NOW() | |
 
 ---
 
-### 3.3 `genres` — Thể loại nhạc
+### 3.3 `genres` — Music genres
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
 | `id` | UUID | PK | |
-| `name` | VARCHAR(100) | UNIQUE, NOT NULL | Ví dụ: V-Pop, Indie, Ballad |
-| `slug` | VARCHAR(100) | UNIQUE, NOT NULL | Ví dụ: v-pop, indie, ballad |
+| `name` | VARCHAR(100) | UNIQUE, NOT NULL | e.g. V-Pop, Indie, Ballad |
+| `slug` | VARCHAR(100) | UNIQUE, NOT NULL | e.g. v-pop, indie, ballad |
 
 ---
 
-### 3.4 `albums` — Album
+### 3.4 `albums` — Albums
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
 | `id` | UUID | PK | |
 | `title` | VARCHAR(255) | NOT NULL | |
 | `artist_id` | UUID | FK → artists.id | |
-| `cover_url` | TEXT | NULLABLE | S3 URL ảnh bìa album |
-| `year` | SMALLINT | NULLABLE | Năm phát hành |
+| `cover_url` | TEXT | NULLABLE | S3 URL of album cover |
+| `year` | SMALLINT | NULLABLE | Release year |
 | `created_at` | TIMESTAMP | DEFAULT NOW() | |
 
 ---
 
-### 3.5 `songs` — Bài hát *(Core Table)*
+### 3.5 `songs` — Songs *(Core Table)*
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
 | `id` | UUID | PK | |
 | `title` | VARCHAR(255) | NOT NULL | |
 | `artist_id` | UUID | FK → artists.id, NOT NULL | |
-| `album_id` | UUID | FK → albums.id, NULLABLE | Bài đơn không có album |
+| `album_id` | UUID | FK → albums.id, NULLABLE | Singles have no album |
 | `genre_id` | UUID | FK → genres.id, NULLABLE | |
-| `duration` | INTEGER | NOT NULL | Thời lượng (giây) |
-| `bpm` | SMALLINT | NULLABLE | Nhịp bài hát (beats/phút) |
-| `mood` | VARCHAR(50) | NULLABLE | Ví dụ: happy, sad, energetic, calm |
-| `key` | VARCHAR(10) | NULLABLE | Ví dụ: C major, A minor |
-| `year` | SMALLINT | NULLABLE | Năm phát hành |
-| `file_url` | TEXT | NOT NULL | S3 URL file .mp3 |
-| `lyrics_url` | TEXT | NULLABLE | S3 URL file .lrc |
-| `cover_url` | TEXT | NULLABLE | S3 URL ảnh bìa bài hát |
-| `play_count` | INTEGER | DEFAULT 0 | Tổng lượt nghe |
+| `duration` | INTEGER | NOT NULL | Duration (seconds) |
+| `bpm` | SMALLINT | NULLABLE | Beats per minute |
+| `mood` | VARCHAR(50) | NULLABLE | e.g. happy, sad, energetic, calm |
+| `key` | VARCHAR(10) | NULLABLE | e.g. C major, A minor |
+| `year` | SMALLINT | NULLABLE | Release year |
+| `file_url` | TEXT | NOT NULL | S3 URL of .mp3 file |
+| `lyrics_url` | TEXT | NULLABLE | S3 URL of .lrc file |
+| `cover_url` | TEXT | NULLABLE | S3 URL of song cover art |
+| `play_count` | INTEGER | DEFAULT 0 | Total play count |
 | `status` | ENUM | DEFAULT 'pending' | `pending` / `published` / `rejected` |
-| `rejection_reason` | TEXT | NULLABLE | Lý do từ chối (nếu rejected) |
+| `rejection_reason` | TEXT | NULLABLE | Rejection reason (if rejected) |
 | `uploaded_at` | TIMESTAMP | DEFAULT NOW() | |
-| `published_at` | TIMESTAMP | NULLABLE | Thời điểm được duyệt |
+| `published_at` | TIMESTAMP | NULLABLE | Timestamp of approval |
 
-**Index:** `artist_id`, `genre_id`, `status`, `play_count DESC` (dùng cho charts)
-**Full-text search:** tạo `tsvector` index trên (`title`, `mood`)
+**Index:** `artist_id`, `genre_id`, `status`, `play_count DESC` (used for charts)
+**Full-text search:** `tsvector` index on (`title`, `mood`)
 
 ---
 
-### 3.6 `song_approval_logs` — Lịch sử duyệt bài
+### 3.6 `song_approval_logs` — Song approval history
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
 | `id` | UUID | PK | |
 | `song_id` | UUID | FK → songs.id | |
-| `admin_id` | UUID | FK → users.id | Admin thực hiện hành động |
+| `admin_id` | UUID | FK → users.id | Admin who performed the action |
 | `action` | ENUM | NOT NULL | `approved` / `rejected` |
-| `reason` | TEXT | NULLABLE | Lý do từ chối |
+| `reason` | TEXT | NULLABLE | Rejection reason |
 | `created_at` | TIMESTAMP | DEFAULT NOW() | |
 
 ---
 
-### 3.7 `playlists` — Playlist
+### 3.7 `playlists` — Playlists
 
-> Dùng cho cả **playlist cá nhân** (user_id != null) và **playlist hệ thống** (user_id = null, is_system = true)
+> Used for both **personal playlists** (user_id != null) and **system playlists** (user_id = null, is_system = true)
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
 | `id` | UUID | PK | |
-| `user_id` | UUID | FK → users.id, NULLABLE | null = playlist hệ thống |
+| `user_id` | UUID | FK → users.id, NULLABLE | null = system playlist |
 | `title` | VARCHAR(255) | NOT NULL | |
 | `cover_url` | TEXT | NULLABLE | |
-| `is_system` | BOOLEAN | DEFAULT false | true = BXH tự động |
-| `chart_type` | ENUM | NULLABLE | `daily` / `weekly` / `monthly` — chỉ có khi is_system = true |
+| `is_system` | BOOLEAN | DEFAULT false | true = auto-generated chart |
+| `chart_type` | ENUM | NULLABLE | `daily` / `weekly` / `monthly` — only set when is_system = true |
 | `created_at` | TIMESTAMP | DEFAULT NOW() | |
 | `updated_at` | TIMESTAMP | AUTO UPDATE | |
 
 ---
 
-### 3.8 `playlist_songs` — Bài hát trong playlist
+### 3.8 `playlist_songs` — Songs in a playlist
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
 | `playlist_id` | UUID | FK → playlists.id | |
 | `song_id` | UUID | FK → songs.id | |
-| `position` | SMALLINT | NOT NULL | Thứ tự trong playlist |
+| `position` | SMALLINT | NOT NULL | Order within the playlist |
 | `added_at` | TIMESTAMP | DEFAULT NOW() | |
 
 **PK:** (`playlist_id`, `song_id`)
 
 ---
 
-### 3.9 `liked_songs` — Thư viện yêu thích
+### 3.9 `liked_songs` — Favorites library
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
 | `user_id` | UUID | FK → users.id | |
 | `song_id` | UUID | FK → songs.id | |
 | `created_at` | TIMESTAMP | DEFAULT NOW() | |
@@ -181,27 +181,27 @@ users ──────────────────── artists (1:1)
 
 ---
 
-### 3.10 `play_history` — Lịch sử nghe
+### 3.10 `play_history` — Play history
 
-> Chỉ lưu **lịch sử nghe gần đây** (giữ lại 100 bản ghi mới nhất per user)
+> Only stores **recent play history** (keeps 100 most recent records per user)
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
 | `id` | UUID | PK | |
 | `user_id` | UUID | FK → users.id, NULLABLE | null = Guest |
 | `song_id` | UUID | FK → songs.id | |
 | `played_at` | TIMESTAMP | DEFAULT NOW() | |
-| `duration_played` | INTEGER | NULLABLE | Giây đã nghe |
-| `completion_rate` | FLOAT | NULLABLE | % bài đã nghe (0.0 → 1.0) |
+| `duration_played` | INTEGER | NULLABLE | Seconds listened |
+| `completion_rate` | FLOAT | NULLABLE | Percentage listened (0.0 → 1.0) |
 
 **Index:** `user_id`, `played_at DESC`
 
 ---
 
-### 3.11 `user_behaviors` — Hành vi người dùng (cho AI)
+### 3.11 `user_behaviors` — User behavior data (for AI)
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
 | `id` | UUID | PK | |
 | `user_id` | UUID | FK → users.id | |
 | `song_id` | UUID | FK → songs.id | |
@@ -210,30 +210,30 @@ users ──────────────────── artists (1:1)
 
 **Index:** `user_id`, `song_id`, `action`
 
-> **Ghi chú:** Bảng này là nguồn dữ liệu chính cho Python AI Service để tính toán recommendation. `skip` được ghi khi user skip bài trước 30 giây.
+> **Note:** This table is the primary data source for the Python AI Service to compute recommendations. `skip` is recorded when a user skips a song before 30 seconds.
 
 ---
 
-### 3.12 `user_preferences` — Sở thích âm nhạc
+### 3.12 `user_preferences` — Music preferences
 
-> Được khởi tạo từ Onboarding, cập nhật dần theo hành vi
+> Initialized from Onboarding, updated gradually based on behavior
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
 | `id` | UUID | PK | |
 | `user_id` | UUID | FK → users.id | |
 | `genre_id` | UUID | FK → genres.id | |
-| `weight` | FLOAT | DEFAULT 1.0 | Mức độ yêu thích (0.0 → 1.0) |
+| `weight` | FLOAT | DEFAULT 1.0 | Preference strength (0.0 → 1.0) |
 | `updated_at` | TIMESTAMP | AUTO UPDATE | |
 
-**PK logic:** 1 user có nhiều genre preferences
+**PK logic:** 1 user can have multiple genre preferences
 
 ---
 
-### 3.13 `follow_artists` — Follow nghệ sĩ
+### 3.13 `follow_artists` — Follow artists
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
 | `user_id` | UUID | FK → users.id | |
 | `artist_id` | UUID | FK → artists.id | |
 | `created_at` | TIMESTAMP | DEFAULT NOW() | |
@@ -242,26 +242,26 @@ users ──────────────────── artists (1:1)
 
 ---
 
-### 3.14 `donations` — Donate cho nghệ sĩ
+### 3.14 `donations` — Artist donations
 
-| Cột | Kiểu | Ràng buộc | Mô tả |
-|-----|------|-----------|-------|
+| Column | Type | Constraint | Description |
+|--------|------|------------|-------------|
 | `id` | UUID | PK | |
-| `user_id` | UUID | FK → users.id, NOT NULL | Người donate |
-| `artist_id` | UUID | FK → artists.id, NOT NULL | Người nhận |
-| `amount` | DECIMAL(10,2) | NOT NULL | Số tiền |
+| `user_id` | UUID | FK → users.id, NOT NULL | The donor |
+| `artist_id` | UUID | FK → artists.id, NOT NULL | The recipient |
+| `amount` | DECIMAL(10,2) | NOT NULL | Amount |
 | `currency` | VARCHAR(3) | DEFAULT 'VND' | `VND` / `USD` |
 | `payment_method` | ENUM | NOT NULL | `vnpay` / `stripe` |
 | `status` | ENUM | DEFAULT 'pending' | `pending` / `success` / `failed` |
-| `transaction_id` | VARCHAR(255) | NULLABLE | ID từ VNPay hoặc Stripe |
+| `transaction_id` | VARCHAR(255) | NULLABLE | ID from VNPay or Stripe |
 | `created_at` | TIMESTAMP | DEFAULT NOW() | |
-| `completed_at` | TIMESTAMP | NULLABLE | Thời điểm thanh toán hoàn tất |
+| `completed_at` | TIMESTAMP | NULLABLE | Timestamp of payment completion |
 
 **Index:** `user_id`, `artist_id`, `status`
 
 ---
 
-## 4. Prisma Schema (Tham Khảo)
+## 4. Prisma Schema (Reference)
 
 ```prisma
 // prisma/schema.prisma
@@ -509,14 +509,14 @@ model Donation {
 
 ---
 
-## 5. Ghi Chú Thiết Kế
+## 5. Design Decisions
 
-| Quyết định | Lý do |
-|------------|-------|
-| Dùng UUID thay INT cho PK | Tránh enumerable IDs, dễ merge dữ liệu sau này |
-| `play_history` không giữ toàn bộ | Chỉ lưu 100 records gần nhất per user — tránh bảng phình to |
-| `user_behaviors` tách riêng khỏi `liked_songs` | liked_songs = ý định rõ ràng của user; behaviors = dữ liệu hành vi cho AI |
-| `playlists.user_id` NULLABLE | Cho phép playlist hệ thống (BXH) không thuộc user nào |
-| `songs.play_count` denormalized | Tránh COUNT query tốn kém mỗi lần load trang |
-| Lyrics lưu trên S3 (.lrc) | File text nhỏ, S3 rẻ, tách biệt khỏi DB |
-| `total_earnings` trên bảng artists | Denormalized để query nhanh — cập nhật mỗi khi donate success |
+| Decision | Reason |
+|----------|--------|
+| Use UUID instead of INT for PKs | Avoids enumerable IDs, easier data merging in the future |
+| `play_history` does not store all records | Only keeps 100 most recent records per user — prevents table bloat |
+| `user_behaviors` separated from `liked_songs` | liked_songs = explicit user intent; behaviors = behavioral data for AI |
+| `playlists.user_id` NULLABLE | Allows system playlists (charts) that belong to no user |
+| `songs.play_count` denormalized | Avoids expensive COUNT queries on every page load |
+| Lyrics stored on S3 (.lrc) | Small text files, S3 is cheap, keeps DB lean |
+| `total_earnings` on artists table | Denormalized for fast queries — updated on each successful donation |

@@ -1,107 +1,107 @@
 # 02 — Tech Stack
-**Dự án:** Online Music Streaming System with AI Personalization
-**Phiên bản tài liệu:** 1.0
-**Ngày:** 2026-03-28
+**Project:** Online Music Streaming System with AI Personalization
+**Document Version:** 1.0
+**Date:** 2026-03-28
 
 ---
 
-## Tổng Quan
+## Overview
 
-Hệ thống sử dụng kiến trúc **Monolith + AI Sidecar**: Node.js backend xử lý toàn bộ nghiệp vụ, Python AI Service chạy độc lập phục vụ recommendation.
+The system uses a **Monolith + AI Sidecar** architecture: the Node.js backend handles all business logic, while the Python AI Service runs independently to serve recommendations.
 
 ---
 
 ## 1. Frontend
 
-| Công nghệ | Phiên bản | Mục đích |
-|-----------|-----------|---------|
-| **React.js** | ^18 | UI framework chính |
-| **Vite** | ^5 | Build tool — khởi động nhanh, HMR tốt |
-| **TailwindCSS** | ^3 | Utility-first CSS — styling nhanh, nhất quán |
-| **Zustand** | ^4 | State management — nhẹ hơn Redux, đủ dùng cho quy mô dự án |
-| **TanStack Query (React Query)** | ^5 | Server state management, caching API responses |
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **React.js** | ^18 | Main UI framework |
+| **Vite** | ^5 | Build tool — fast startup, excellent HMR |
+| **TailwindCSS** | ^3 | Utility-first CSS — fast, consistent styling |
+| **Zustand** | ^4 | State management — lighter than Redux, sufficient for this project scale |
+| **TanStack Query (React Query)** | ^5 | Server state management, API response caching |
 | **React Router** | ^6 | Client-side routing |
-| **Howler.js** | ^2 | Audio player library — hỗ trợ streaming, crossfade, event handling |
+| **Howler.js** | ^2 | Audio player library — supports streaming, crossfade, event handling |
 | **Axios** | ^1 | HTTP client |
 
-### Lý do chọn Howler.js
-- Hỗ trợ HTML5 Audio + Web Audio API
-- Tích hợp crossfade dễ dàng
-- Xử lý các edge case streaming (buffering, error) tốt hơn Audio API thuần
+### Why Howler.js
+- Supports HTML5 Audio + Web Audio API
+- Easy crossfade integration
+- Handles streaming edge cases (buffering, errors) better than the raw Audio API
 
 ---
 
 ## 2. Backend
 
-| Công nghệ | Phiên bản | Mục đích |
-|-----------|-----------|---------|
+| Technology | Version | Purpose |
+|------------|---------|---------|
 | **Node.js** | ^20 LTS | Runtime |
 | **Express.js** | ^4 | REST API framework |
-| **Prisma ORM** | ^5 | Database access — type-safe, migration tự động |
+| **Prisma ORM** | ^5 | Database access — type-safe, automatic migrations |
 | **jsonwebtoken** | ^9 | JWT authentication |
-| **bcryptjs** | ^2 | Mã hoá password |
-| **Multer** | ^1 | Xử lý file upload (multipart/form-data) |
-| **AWS SDK v3** | ^3 | Upload file lên S3, tạo presigned URL |
-| **Bull** | ^4 | Job queue — xử lý async: gửi email, cập nhật charts |
-| **Nodemailer** | ^6 | Gửi email (kết hợp với AWS SES SMTP) |
-| **Stripe** | ^14 | Tích hợp thanh toán thẻ quốc tế |
-| **express-validator** | ^7 | Validate input từ request |
+| **bcryptjs** | ^2 | Password hashing |
+| **Multer** | ^1 | File upload handling (multipart/form-data) |
+| **AWS SDK v3** | ^3 | Upload files to S3, generate presigned URLs |
+| **Bull** | ^4 | Job queue — async processing: send emails, update charts |
+| **Nodemailer** | ^6 | Send emails (via AWS SES SMTP) |
+| **Stripe** | ^14 | International card payment integration |
+| **express-validator** | ^7 | Validate request input |
 | **helmet** | ^7 | HTTP security headers |
 | **cors** | ^2 | CORS configuration |
 | **morgan** | ^1 | HTTP request logging |
 
-### Lý do chọn Prisma thay vì Sequelize
-- Schema định nghĩa rõ ràng, dễ đọc (`schema.prisma`)
+### Why Prisma over Sequelize
+- Schema defined clearly and readably (`schema.prisma`)
 - Auto-generated TypeScript types
-- Migration workflow gọn hơn
+- Cleaner migration workflow
 
 ---
 
 ## 3. Database
 
-| Công nghệ | Mục đích |
-|-----------|---------|
-| **PostgreSQL 15** | Database chính — lưu toàn bộ dữ liệu quan hệ |
-| **Redis 7** | Cache (BXH charts, kết quả search) + Job queue (Bull) |
+| Technology | Purpose |
+|------------|---------|
+| **PostgreSQL 15** | Main database — stores all relational data |
+| **Redis 7** | Cache (charts, search results) + Job queue (Bull) |
 
-### Lý do chọn PostgreSQL
-- Full-text search tích hợp sẵn (`tsvector`) — không cần Elasticsearch cho quy mô nhỏ
-- Hỗ trợ JSON columns cho dữ liệu linh hoạt
-- Mature, stable, phù hợp với dữ liệu có quan hệ phức tạp (user, song, playlist, donation)
+### Why PostgreSQL
+- Built-in full-text search (`tsvector`) — no need for Elasticsearch at this scale
+- Supports JSON columns for flexible data
+- Mature, stable, suitable for complex relational data (users, songs, playlists, donations)
 
 ---
 
 ## 4. AI / ML Service
 
-| Công nghệ | Phiên bản | Mục đích |
-|-----------|-----------|---------|
-| **Python** | ^3.11 | Runtime cho AI service |
-| **FastAPI** | ^0.110 | REST API framework — tốc độ cao, auto docs (Swagger) |
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Python** | ^3.11 | AI service runtime |
+| **FastAPI** | ^0.110 | REST API framework — high speed, auto docs (Swagger) |
 | **Uvicorn** | ^0.29 | ASGI server |
-| **Pandas** | ^2 | Xử lý, transform dữ liệu |
-| **NumPy** | ^1.26 | Tính toán ma trận |
+| **Pandas** | ^2 | Data processing and transformation |
+| **NumPy** | ^1.26 | Matrix computation |
 | **Scikit-learn** | ^1.4 | Content-based Filtering (cosine similarity), Collaborative Filtering (SVD) |
-| **SQLAlchemy** | ^2 | Kết nối PostgreSQL từ Python |
-| **psycopg2-binary** | ^2 | PostgreSQL adapter cho Python |
+| **SQLAlchemy** | ^2 | Connect to PostgreSQL from Python |
+| **psycopg2-binary** | ^2 | PostgreSQL adapter for Python |
 
 ### AI Endpoints
-| Endpoint | Mô tả |
-|----------|-------|
-| `GET /recommend?user_id=X` | Trả về danh sách song_id gợi ý cho user (Homepage) |
-| `GET /radio?song_id=X&user_id=Y` | Trả về danh sách bài tương tự cho Radio mode |
+| Endpoint | Description |
+|----------|-------------|
+| `GET /recommend?user_id=X` | Returns list of recommended song_ids for a user (Homepage) |
+| `GET /radio?song_id=X&user_id=Y` | Returns list of similar songs for Radio mode |
 
 ---
 
 ## 5. Infrastructure
 
-| Công nghệ | Mục đích |
-|-----------|---------|
-| **AWS S3** | Lưu audio files (.mp3), lyrics files (.lrc), cover images |
-| **AWS SES** | SMTP server để gửi email xác nhận, thông báo |
-| **Docker** | Container hoá từng service |
-| **Docker Compose** | Orchestrate toàn bộ stack trên local |
+| Technology | Purpose |
+|------------|---------|
+| **AWS S3** | Store audio files (.mp3), lyrics files (.lrc), cover images |
+| **AWS SES** | SMTP server for sending confirmation and notification emails |
+| **Docker** | Containerize each service |
+| **Docker Compose** | Orchestrate the full stack locally |
 
-### Cấu trúc Docker Compose (local)
+### Docker Compose Structure (local)
 ```yaml
 services:
   frontend:    # React (Vite dev server) — port 3000
@@ -115,28 +115,28 @@ services:
 
 ## 6. Dev Tools & Testing
 
-| Công nghệ | Mục đích |
-|-----------|---------|
+| Technology | Purpose |
+|------------|---------|
 | **ESLint** + **Prettier** | Code quality & formatting (JS/TS) |
-| **Jest** | Unit testing cho Node.js backend |
-| **Pytest** | Unit testing cho Python AI service |
-| **Postman / Thunder Client** | Test API thủ công |
-| **Prisma Studio** | GUI quản lý database khi develop |
+| **Jest** | Unit testing for Node.js backend |
+| **Pytest** | Unit testing for Python AI service |
+| **Postman / Thunder Client** | Manual API testing |
+| **Prisma Studio** | Database GUI for development |
 
 ---
 
-## 7. Tích Hợp Thanh Toán
+## 7. Payment Integration
 
-| Cổng | SDK | Thị trường |
-|------|-----|-----------|
-| **Stripe** | `stripe` npm package | Thẻ quốc tế (Visa/Mastercard) |
-| **VNPay** | VNPay SDK / REST API | Ví điện tử & ngân hàng Việt Nam |
+| Gateway | SDK | Market |
+|---------|-----|--------|
+| **Stripe** | `stripe` npm package | International cards (Visa/Mastercard) |
+| **VNPay** | VNPay SDK / REST API | Vietnamese e-wallets & banks |
 
-> **Lưu ý:** Thanh toán chỉ phục vụ tính năng Donate/Tip cho Artist. Không có gói subscription.
+> **Note:** Payments only serve the Donate/Tip feature for Artists. No subscription plans.
 
 ---
 
-## 8. Bảng Tóm Tắt Theo Layer
+## 8. Summary by Layer
 
 ```
 ┌─────────────────────────────────────────────────────┐
