@@ -1,7 +1,7 @@
 # 03 — System Architecture
 **Project:** Online Music Streaming System with AI Personalization
-**Document Version:** 1.0
-**Date:** 2026-03-28
+**Document Version:** 1.1
+**Date:** 2026-04-11
 
 ---
 
@@ -249,7 +249,11 @@ Invalidate Redis cache for charts endpoint
 | Charts (daily/weekly/monthly) | Redis | 1 hour |
 | Popular search results | Redis | 30 minutes |
 | AI Recommendations per user | Redis | 15 minutes |
-| Song metadata (public) | Redis | 1 hour |
+| Song metadata (`song:{id}`) | Redis | 1 hour |
+| Album metadata (`album:{id}`) | Redis | 1 hour |
+| Artist profile (`artist:{id}`) | Redis | 1 hour |
+
+> Song list (`GET /music/songs`) is **not cached** — results vary by filter params.
 
 ---
 

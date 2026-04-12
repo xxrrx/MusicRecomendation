@@ -1,7 +1,7 @@
 # 04 — Modules Structure
 **Project:** Online Music Streaming System with AI Personalization
-**Document Version:** 1.0
-**Date:** 2026-03-28
+**Document Version:** 1.1
+**Date:** 2026-04-11
 
 ---
 
@@ -23,16 +23,22 @@ The system consists of 3 independent projects, each with its own directory struc
 backend/
 ├── src/
 │   ├── modules/
-│   │   ├── auth/
+│   │   ├── auth/                          ✅ Implemented
 │   │   │   ├── auth.routes.js
 │   │   │   ├── auth.controller.js
 │   │   │   ├── auth.service.js
 │   │   │   └── auth.validator.js
 │   │   │
-│   │   ├── user/
+│   │   ├── user/                          ✅ Implemented
 │   │   │   ├── user.routes.js
 │   │   │   ├── user.controller.js
-│   │   │   └── user.service.js
+│   │   │   ├── user.service.js
+│   │   │   └── user.validator.js
+│   │   │
+│   │   ├── music/                         ✅ Implemented
+│   │   │   ├── music.routes.js
+│   │   │   ├── music.controller.js
+│   │   │   └── music.service.js
 │   │   │
 │   │   ├── artist/
 │   │   │   ├── artist.routes.js
@@ -43,11 +49,6 @@ backend/
 │   │   │   ├── admin.routes.js
 │   │   │   ├── admin.controller.js
 │   │   │   └── admin.service.js
-│   │   │
-│   │   ├── music/
-│   │   │   ├── music.routes.js
-│   │   │   ├── music.controller.js
-│   │   │   └── music.service.js
 │   │   │
 │   │   ├── player/
 │   │   │   ├── player.routes.js
@@ -94,22 +95,23 @@ backend/
 │   │
 │   ├── shared/
 │   │   ├── middleware/
-│   │   │   ├── auth.middleware.js      ← JWT authentication
+│   │   │   ├── auth.middleware.js      ← JWT authentication (authenticate, optionalAuthenticate, authorize) ✅
 │   │   │   ├── role.middleware.js      ← role-based access (user/artist/admin)
-│   │   │   ├── error.middleware.js     ← global error handler
+│   │   │   ├── error.middleware.js     ← global error handler ✅
 │   │   │   └── upload.middleware.js    ← Multer config
 │   │   │
 │   │   ├── utils/
+│   │   │   ├── jwt.helper.js           ← signAccessToken/Refresh, verifyAccessToken/Refresh ✅
+│   │   │   ├── email.helper.js         ← sendVerificationEmail (SES in prod, console in dev) ✅
 │   │   │   ├── s3.helper.js            ← upload + presigned URL
-│   │   │   ├── email.helper.js         ← send email via SES
 │   │   │   ├── pagination.helper.js    ← standardized pagination
-│   │   │   └── response.helper.js      ← standardized response format
+│   │   │   └── response.helper.js      ← success(), paginated(), createError() ✅
 │   │   │
 │   │   └── config/
-│   │       ├── database.js             ← Prisma client
-│   │       ├── redis.js                ← Redis client + Bull queue
+│   │       ├── database.js             ← Prisma client singleton ✅
+│   │       ├── redis.js                ← ioredis client singleton ✅
 │   │       ├── s3.js                   ← AWS S3 client
-│   │       └── env.js                  ← read and validate environment variables
+│   │       └── env.js                  ← read and validate environment variables ✅
 │   │
 │   └── app.js                          ← initialize Express, register routes
 │
@@ -118,9 +120,12 @@ backend/
 │   └── migrations/                     ← migration history
 │
 ├── tests/
-│   ├── auth.test.js
-│   ├── music.test.js
-│   └── donation.test.js
+│   ├── unit/
+│   │   ├── auth.service.test.js        ✅ (password hashing, JWT, register, verify, login)
+│   │   ├── user.service.test.js        ✅
+│   │   └── music.service.test.js       ✅ (11 unit tests)
+│   └── integration/
+│       └── auth.flow.test.js           ✅ (register→verify→login→refresh→logout)
 │
 ├── .env
 ├── .env.example
@@ -154,103 +159,60 @@ backend/
 frontend/
 ├── src/
 │   ├── pages/
-│   │   ├── Home/
-│   │   │   ├── HomePage.jsx            ← homepage layout
-│   │   │   └── components/
-│   │   │       ├── RecommendedSection.jsx   ← "Recommended for you"
-│   │   │       ├── RecentlyPlayed.jsx
-│   │   │       └── FeaturedArtists.jsx
-│   │   │
-│   │   ├── Search/
-│   │   │   ├── SearchPage.jsx
-│   │   │   └── components/
-│   │   │       ├── SearchBar.jsx
-│   │   │       └── SearchResults.jsx    ← grouped: songs / albums / artists
-│   │   │
-│   │   ├── Charts/
-│   │   │   └── ChartsPage.jsx           ← tabs: daily / weekly / monthly
-│   │   │
-│   │   ├── Artist/
-│   │   │   ├── ArtistPage.jsx           ← profile, song list
-│   │   │   └── components/
-│   │   │       └── DonateModal.jsx
-│   │   │
-│   │   ├── Album/
-│   │   │   └── AlbumPage.jsx
-│   │   │
-│   │   ├── Playlist/
-│   │   │   ├── PlaylistPage.jsx         ← view user's playlist
-│   │   │   └── LikedSongsPage.jsx
-│   │   │
-│   │   ├── Auth/
-│   │   │   ├── LoginPage.jsx
-│   │   │   ├── RegisterPage.jsx
-│   │   │   ├── VerifyEmailPage.jsx
-│   │   │   └── OnboardingPage.jsx       ← select preferences after registration
-│   │   │
-│   │   ├── Dashboard/                   ← Artist dashboard
-│   │   │   ├── DashboardPage.jsx
-│   │   │   └── components/
-│   │   │       ├── UploadSongForm.jsx
-│   │   │       ├── SongManageTable.jsx
-│   │   │       └── StatsCards.jsx
-│   │   │
-│   │   └── Admin/                       ← Admin panel
-│   │       ├── AdminPage.jsx
-│   │       └── components/
-│   │           ├── PendingSongsTable.jsx
-│   │           ├── UserManageTable.jsx
-│   │           └── AnalyticsDashboard.jsx
+│   │   ├── LoginPage.jsx               ✅ login form → setAuth → redirect
+│   │   ├── RegisterPage.jsx            ✅ register form → success screen với email notice
+│   │   ├── VerifyEmailPage.jsx         ✅ reads ?token from URL, calls /auth/verify-email
+│   │   ├── OnboardingPage.jsx          ✅ fetch genres, pick preferences, call /users/onboarding
+│   │   ├── ArtistPage.jsx              ✅ hero + bio + popular songs + albums grid
+│   │   ├── AlbumPage.jsx               ✅ header + song list with rank
+│   │   ├── HomePage.jsx                ← placeholder (chưa implement)
+│   │   ├── SearchPage.jsx              ← chưa implement
+│   │   ├── ChartsPage.jsx              ← chưa implement
+│   │   ├── PlaylistPage.jsx            ← chưa implement
+│   │   ├── LikedSongsPage.jsx          ← chưa implement
+│   │   ├── DashboardPage.jsx           ← Artist dashboard (chưa implement)
+│   │   └── AdminPage.jsx               ← Admin panel (chưa implement)
 │   │
-│   ├── components/                      ← shared components
+│   ├── components/                     ← shared components
+│   │   ├── ProtectedRoute.jsx          ✅ redirect to /login if not authenticated
+│   │   ├── SongCard.jsx                ✅ song row: cover, title, artist, duration (mm:ss)
+│   │   ├── ArtistCard.jsx              ✅ artist tile: avatar, name, follower count
 │   │   ├── Player/
-│   │   │   ├── PlayerBar.jsx            ← fixed player bar at bottom
-│   │   │   ├── PlayerControls.jsx       ← play/pause/skip/shuffle/repeat
-│   │   │   ├── ProgressBar.jsx
-│   │   │   ├── VolumeControl.jsx
-│   │   │   └── SleepTimerButton.jsx
+│   │   │   ├── PlayerBar.jsx           ← fixed player bar at bottom (chưa implement)
+│   │   │   ├── PlayerControls.jsx      ← chưa implement
+│   │   │   ├── ProgressBar.jsx         ← chưa implement
+│   │   │   ├── VolumeControl.jsx       ← chưa implement
+│   │   │   └── SleepTimerButton.jsx    ← chưa implement
 │   │   │
 │   │   ├── Lyrics/
-│   │   │   └── LyricsPanel.jsx          ← synced lyrics overlay
+│   │   │   └── LyricsPanel.jsx         ← synced lyrics overlay (chưa implement)
 │   │   │
-│   │   ├── SongCard/
-│   │   │   └── SongCard.jsx             ← song display card
-│   │   │
-│   │   ├── ArtistCard/
-│   │   │   └── ArtistCard.jsx
-│   │   │
-│   │   ├── Layout/
-│   │   │   ├── MainLayout.jsx           ← Sidebar + PlayerBar + Content
-│   │   │   ├── Sidebar.jsx
-│   │   │   └── Navbar.jsx
-│   │   │
-│   │   └── Common/
-│   │       ├── Button.jsx
-│   │       ├── Modal.jsx
-│   │       ├── Spinner.jsx
-│   │       └── ProtectedRoute.jsx       ← redirect if not authenticated
+│   │   └── Layout/
+│   │       ├── MainLayout.jsx          ← Sidebar + PlayerBar + Content (chưa implement)
+│   │       ├── Sidebar.jsx             ← chưa implement
+│   │       └── Navbar.jsx              ← chưa implement
 │   │
-│   ├── stores/                          ← Zustand global state
-│   │   ├── playerStore.js               ← currentSong, queue, isPlaying
-│   │   ├── authStore.js                 ← user, token, isAuthenticated
-│   │   └── uiStore.js                   ← sidebar open, lyrics panel open
+│   ├── stores/                         ← Zustand global state
+│   │   ├── authStore.js                ✅ accessToken, refreshToken, user, isAuthenticated (persisted)
+│   │   ├── playerStore.js              ← currentSong, queue, isPlaying (chưa implement)
+│   │   └── uiStore.js                  ← chưa implement
 │   │
-│   ├── services/                        ← Axios API call functions
-│   │   ├── api.js                       ← Axios instance + interceptors
-│   │   ├── auth.service.js
-│   │   ├── music.service.js
-│   │   ├── playlist.service.js
-│   │   ├── recommendation.service.js
-│   │   ├── donation.service.js
-│   │   └── artist.service.js
+│   ├── lib/                            ← Axios instances + API helpers
+│   │   ├── api.js                      ✅ axios instance: auto attach Bearer token + 401 refresh interceptor
+│   │   └── musicApi.js                 ✅ fetchSong, fetchSongs, fetchAlbum, fetchArtist
 │   │
-│   ├── hooks/                           ← custom React hooks
-│   │   ├── usePlayer.js                 ← control Howler.js
-│   │   ├── useLyrics.js                 ← parse LRC + sync with playback
-│   │   └── useDebounce.js               ← used for search input
+│   ├── hooks/                          ← custom React hooks (chưa implement)
+│   │   ├── usePlayer.js                ← control Howler.js
+│   │   ├── useLyrics.js                ← parse LRC + sync with playback
+│   │   └── useDebounce.js              ← used for search input
 │   │
-│   ├── App.jsx
-│   └── main.jsx
+│   ├── tests/
+│   │   ├── setup.js                    ✅ vitest + testing-library setup
+│   │   ├── auth.test.jsx               ✅ ProtectedRoute, LoginPage, authStore (6 tests)
+│   │   └── music.test.jsx              ✅ SongCard, ArtistCard, ArtistPage, AlbumPage (15 tests)
+│   │
+│   ├── App.jsx                         ✅ routes: /login, /register, /verify-email, /onboarding, /artists/:id, /albums/:id
+│   └── main.jsx                        ✅ ReactDOM.createRoot, QueryClientProvider + BrowserRouter
 │
 ├── public/
 ├── index.html
@@ -308,13 +270,24 @@ When user has extensive data (> 50 plays):
 MusicRecomendation/
 ├── frontend/               ← React app
 ├── backend/                ← Node.js API
-├── ai_service/             ← Python AI service
+├── ai_service/             ← Python AI service (scaffold)
 ├── docs/                   ← Project documentation
 │   ├── 01_requirements_specification.md
 │   ├── 02_tech_stack.md
 │   ├── 03_architecture.md
 │   ├── 04_modules_structure.md
-│   └── 05_database_design.md
-├── docker-compose.yml      ← Orchestrate the full stack
-└── README.md
+│   ├── 05_database_design.md
+│   ├── 06_api_contract.md
+│   ├── 07_ai_service_contract.md
+│   └── 08_ai_layer_design.md
+├── implement/              ← Implementation notes per module
+│   ├── module_0_1_docker_database_setup.md
+│   ├── module_1_1_auth_backend.md
+│   ├── module_1_2_user_profile_backend.md
+│   ├── module_1_3_auth_frontend.md
+│   ├── module_2_1_music_read_apis.md
+│   └── module_2_2_music_frontend.md
+├── docker-compose.yml      ← Orchestrate 5 services: frontend, backend, ai_service, postgres, redis
+├── .gitignore
+└── plan.md
 ```

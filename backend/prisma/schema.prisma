@@ -1,0 +1,258 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  user
+  artist
+  admin
+}
+
+enum SongStatus {
+  pending
+  published
+  rejected
+}
+
+enum BehaviorAction {
+  like
+  dislike
+  skip
+}
+
+enum PaymentMethod {
+  vnpay
+  stripe
+}
+
+enum PaymentStatus {
+  pending
+  success
+  failed
+}
+
+enum ChartType {
+  daily
+  weekly
+  monthly
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(user)
+  displayName  String
+  avatarUrl    String?
+  isVerified   Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  artist      Artist?
+  playlists   Playlist[]
+  likedSongs  LikedSong[]
+  playHistory PlayHistory[]
+  behaviors   UserBehavior[]
+  preferences UserPreference[]
+  followings  FollowArtist[]
+  donations   Donation[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Artist {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  bio           String?
+  totalEarnings Decimal  @default(0) @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+
+  user      User           @relation(fields: [userId], references: [id])
+  songs     Song[]
+  albums    Album[]
+  followers FollowArtist[]
+  donations Donation[]
+}
+
+model Genre {
+  id   String @id @default(uuid())
+  name String @unique
+  slug String @unique
+
+  songs       Song[]
+  preferences UserPreference[]
+}
+
+model Album {
+  id        String   @id @default(uuid())
+  title     String
+  artistId  String
+  coverUrl  String?
+  year      Int?
+  createdAt DateTime @default(now())
+
+  artist Artist @relation(fields: [artistId], references: [id])
+  songs  Song[]
+}
+
+model Song {
+  id              String     @id @default(uuid())
+  title           String
+  artistId        String
+  albumId         String?
+  genreId         String?
+  duration        Int
+  bpm             Int?
+  mood            String?
+  key             String?
+  year            Int?
+  fileUrl         String
+  lyricsUrl       String?
+  coverUrl        String?
+  playCount       Int        @default(0)
+  status          SongStatus @default(pending)
+  rejectionReason String?
+  uploadedAt      DateTime   @default(now())
+  publishedAt     DateTime?
+
+  artist        Artist            @relation(fields: [artistId], references: [id])
+  album         Album?            @relation(fields: [albumId], references: [id])
+  genre         Genre?            @relation(fields: [genreId], references: [id])
+  approvalLogs  SongApprovalLog[]
+  playlistSongs PlaylistSong[]
+  likedBy       LikedSong[]
+  playHistory   PlayHistory[]
+  behaviors     UserBehavior[]
+
+  @@index([artistId])
+  @@index([genreId])
+  @@index([status])
+  @@index([playCount(sort: Desc)])
+}
+
+model SongApprovalLog {
+  id        String   @id @default(uuid())
+  songId    String
+  adminId   String
+  action    String
+  reason    String?
+  createdAt DateTime @default(now())
+
+  song Song @relation(fields: [songId], references: [id])
+}
+
+model Playlist {
+  id        String     @id @default(uuid())
+  userId    String?
+  title     String
+  coverUrl  String?
+  isSystem  Boolean    @default(false)
+  chartType ChartType?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user  User?          @relation(fields: [userId], references: [id])
+  songs PlaylistSong[]
+}
+
+model PlaylistSong {
+  playlistId String
+  songId     String
+  position   Int
+  addedAt    DateTime @default(now())
+
+  playlist Playlist @relation(fields: [playlistId], references: [id])
+  song     Song     @relation(fields: [songId], references: [id])
+
+  @@id([playlistId, songId])
+}
+
+model LikedSong {
+  userId    String
+  songId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  song Song @relation(fields: [songId], references: [id])
+
+  @@id([userId, songId])
+}
+
+model PlayHistory {
+  id             String   @id @default(uuid())
+  userId         String?
+  songId         String
+  playedAt       DateTime @default(now())
+  durationPlayed Int?
+  completionRate Float?
+
+  user User? @relation(fields: [userId], references: [id])
+  song Song  @relation(fields: [songId], references: [id])
+
+  @@index([userId])
+  @@index([playedAt(sort: Desc)])
+}
+
+model UserBehavior {
+  id        String         @id @default(uuid())
+  userId    String
+  songId    String
+  action    BehaviorAction
+  createdAt DateTime       @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  song Song @relation(fields: [songId], references: [id])
+
+  @@index([userId])
+  @@index([songId])
+  @@index([action])
+}
+
+model UserPreference {
+  id        String   @id @default(uuid())
+  userId    String
+  genreId   String
+  weight    Float    @default(1.0)
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id])
+  genre Genre @relation(fields: [genreId], references: [id])
+}
+
+model FollowArtist {
+  userId    String
+  artistId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  artist Artist @relation(fields: [artistId], references: [id])
+
+  @@id([userId, artistId])
+}
+
+model Donation {
+  id            String        @id @default(uuid())
+  userId        String
+  artistId      String
+  amount        Decimal       @db.Decimal(10, 2)
+  currency      String        @default("VND")
+  paymentMethod PaymentMethod
+  status        PaymentStatus @default(pending)
+  transactionId String?
+  createdAt     DateTime      @default(now())
+  completedAt   DateTime?
+
+  user   User   @relation(fields: [userId], references: [id])
+  artist Artist @relation(fields: [artistId], references: [id])
+
+  @@index([userId])
+  @@index([artistId])
+  @@index([status])
+}
