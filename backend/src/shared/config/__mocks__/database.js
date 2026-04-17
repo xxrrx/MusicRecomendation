@@ -44,6 +44,11 @@ const prisma = {
   playHistory: {
     count: jest.fn(),
     findMany: jest.fn(),
+    create: jest.fn(),
+  },
+  userBehavior: {
+    upsert: jest.fn(),
+    findMany: jest.fn(),
   },
   $transaction: jest.fn((fn) => (typeof fn === 'function' ? fn(prisma) : Promise.all(fn))),
   $disconnect: jest.fn(),
