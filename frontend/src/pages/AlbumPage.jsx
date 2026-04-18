@@ -68,7 +68,7 @@ export default function AlbumPage() {
       <div className="max-w-4xl mx-auto px-6 py-8">
         <div className="space-y-1">
           {album.songs.map((song, i) => (
-            <SongCard key={song.id} song={song} rank={i + 1} />
+            <SongCard key={song.id} song={song} rank={i + 1} queue={album.songs} queueIndex={i} />
           ))}
         </div>
       </div>

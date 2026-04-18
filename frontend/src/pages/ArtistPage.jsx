@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchArtist } from '../lib/musicApi';
 import SongCard from '../components/SongCard';
+import FollowButton from '../components/FollowButton';
 
 export default function ArtistPage() {
   const { id } = useParams();
@@ -52,6 +53,9 @@ export default function ArtistPage() {
               {' · '}
               {artist.totalPlayCount.toLocaleString()} plays
             </p>
+            <div className="mt-3">
+              <FollowButton artistId={artist.id} />
+            </div>
           </div>
         </div>
       </div>
@@ -71,7 +75,7 @@ export default function ArtistPage() {
             <h2 className="text-lg font-semibold mb-3">Popular</h2>
             <div className="space-y-1">
               {artist.songs.map((song, i) => (
-                <SongCard key={song.id} song={song} rank={i + 1} />
+                <SongCard key={song.id} song={song} rank={i + 1} queue={artist.songs} queueIndex={i} />
               ))}
             </div>
           </section>

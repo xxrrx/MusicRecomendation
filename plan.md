@@ -216,35 +216,46 @@ frontend/
 
 ### PHASE 4 — Playlists & Social (Week 5)
 
-#### Module 4.1: Playlists
+#### Module 4.1: Playlists ✅ COMPLETED (2026-04-17)
 - `GET/POST /playlists`, `PATCH/DELETE /playlists/:id`
 - `POST/DELETE /playlists/:id/songs`
-- `GET /playlists/liked`, `POST/DELETE /playlists/liked/:songId`
+- `GET /playlists/liked/songs`, `POST/DELETE /playlists/liked/songs/:songId`, `GET /playlists/liked/songs/:songId`
+- Frontend: PlaylistsPage, PlaylistPage, LikedSongsPage, LikeButton component
 - **Tables:** playlists, playlist_songs, liked_songs
-- **Tests:** create playlist, add/remove songs, like a song appears in liked list
+- **Tests:** 29 backend unit tests + 17 frontend component tests
+- **See:** `implement/module_4_1_playlists.md`
 
-#### Module 4.2: Social — Follow Artist
+#### Module 4.2: Social — Follow Artist ✅ COMPLETED (2026-04-17)
 - `POST/DELETE /social/follow/:artistId`
-- `GET /social/following`
+- `GET /social/following`, `GET /social/follow/:artistId`
+- Frontend: FollowingPage, FollowButton component, ArtistPage integrated
 - **Tables:** follow_artists
-- **Tests:** follow/unfollow toggling, following list is accurate
+- **Tests:** 8 backend unit tests + 4 frontend component tests
+- **See:** `implement/module_4_2_social.md`
 
 ---
 
 ### PHASE 5 — Search & Charts (Week 6)
 
-#### Module 5.1: Search
-- `GET /search?q=&type=` — full-text search across songs, artists, albums
-- PostgreSQL full-text search (tsvector)
-- Redis cache 30 minutes
-- **Tests:** search by title, by artist, grouped results returned correctly
+#### Module 5.1: Search ✅ COMPLETED (2026-04-18)
+- `GET /search?q=&type=` — search across songs, artists, albums
+- Prisma `contains` with `mode: 'insensitive'` (PostgreSQL ILIKE)
+- Parallel queries per category; type filter short-circuits unused queries
+- Redis cache 30 minutes (`search:{type}:{q}:{limit}`)
+- Frontend: SearchPage with input, type filter tabs, results grid
+- **Tests:** 8 backend unit tests + 6 frontend component tests
+- **See:** `implement/module_5_1_search.md`
 
-#### Module 5.2: Charts
-- `GET /charts/:type` — daily / weekly / monthly
-- Bull cron job: compute top 50, upsert to playlists table
+#### Module 5.2: Charts ✅ COMPLETED (2026-04-18)
+- `GET /charts/daily`, `/charts/weekly`, `/charts/monthly`
+- Aggregate `play_history` with `groupBy` to rank top 50 by actual listens
+- Cold-start fallback to all-time `playCount` when < 10 plays in period
+- Bull cron jobs: daily (midnight), weekly (Monday), monthly (1st of month)
+- Upsert results into `playlists` table (`isSystem=true`)
 - Redis cache 1 hour
-- **Tables:** playlists (is_system=true), playlist_songs
-- **Tests:** cron generates correct chart, Redis invalidated after update
+- Frontend: ChartsPage with tab switcher, ranked song list
+- **Tests:** 6 backend unit tests + 5 frontend component tests
+- **See:** `implement/module_5_2_charts.md`
 
 ---
 
