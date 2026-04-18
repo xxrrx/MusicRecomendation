@@ -1,8 +1,10 @@
 import { NavLink, Link } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 
-const navLinks = [
+const baseLinks = [
   { to: '/', label: 'Home', icon: '🏠', exact: true },
+  { to: '/search', label: 'Search', icon: '🔍' },
+  { to: '/charts', label: 'Charts', icon: '📈' },
   { to: '/liked', label: 'Liked Songs', icon: '❤️' },
   { to: '/playlists', label: 'Playlists', icon: '📋' },
   { to: '/following', label: 'Following', icon: '👥' },
@@ -10,6 +12,14 @@ const navLinks = [
 
 export default function Sidebar() {
   const { user, clearAuth } = useAuthStore();
+
+  const navLinks = [
+    ...baseLinks,
+    ...(user?.role === 'artist' || user?.role === 'admin'
+      ? [{ to: '/artist/dashboard', label: 'My Dashboard', icon: '🎤' }]
+      : []),
+    ...(user?.role === 'admin' ? [{ to: '/admin', label: 'Admin Panel', icon: '⚙️' }] : []),
+  ];
 
   return (
     <aside className="w-56 shrink-0 bg-gray-900 min-h-screen flex flex-col py-6 px-4">

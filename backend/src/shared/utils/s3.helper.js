@@ -1,4 +1,4 @@
-const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const env = require('../config/env');
 
@@ -37,4 +37,36 @@ async function getPresignedUrl(key, expiresIn = 3600) {
   return getSignedUrl(getS3Client(), command, { expiresIn });
 }
 
-module.exports = { getPresignedUrl };
+/**
+ * Upload a file buffer to S3.
+ * @param {string} key — S3 object key
+ * @param {Buffer} buffer — file contents
+ * @param {string} contentType — MIME type
+ * @returns {Promise<string>} the key that was stored
+ */
+async function uploadToS3(key, buffer, contentType) {
+  if (!env.AWS_S3_BUCKET) {
+    // Dev fallback: pretend upload succeeded
+    return key;
+  }
+  const command = new PutObjectCommand({
+    Bucket: env.AWS_S3_BUCKET,
+    Key: key,
+    Body: buffer,
+    ContentType: contentType,
+  });
+  await getS3Client().send(command);
+  return key;
+}
+
+/**
+ * Delete an object from S3 (best-effort — does not throw on missing key).
+ * @param {string} key — S3 object key
+ */
+async function deleteFromS3(key) {
+  if (!env.AWS_S3_BUCKET) return;
+  const command = new DeleteObjectCommand({ Bucket: env.AWS_S3_BUCKET, Key: key });
+  await getS3Client().send(command);
+}
+
+module.exports = { getPresignedUrl, uploadToS3, deleteFromS3 };

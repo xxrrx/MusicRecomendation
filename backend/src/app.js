@@ -32,6 +32,8 @@ app.use('/api/playlists', require('./modules/playlist/playlist.routes'));
 app.use('/api/social', require('./modules/social/social.routes'));
 app.use('/api/search', require('./modules/search/search.routes'));
 app.use('/api/charts', require('./modules/charts/charts.routes'));
+app.use('/api/artist', require('./modules/artist/artist.routes'));
+app.use('/api/admin', require('./modules/admin/admin.routes'));
 
 // 404 handler
 app.use((req, res) => {

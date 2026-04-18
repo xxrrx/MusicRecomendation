@@ -261,23 +261,31 @@ frontend/
 
 ### PHASE 6 — Artist & Admin (Week 7)
 
-#### Module 6.1: Artist Module
-- `POST /artist/songs` — file upload (Multer → S3), create pending song record
-- `GET/PATCH/DELETE /artist/songs/:id`
-- `POST /artist/albums`
-- `GET /artist/dashboard` — play stats, follower count, total earnings
-- Bull job: send email to admin when new song is pending
-- **Tables:** songs, albums, song_approval_logs
-- **Tests:** file uploaded to S3, song created with status=pending, dashboard data accurate
+#### Module 6.1: Artist Module ✅ COMPLETED (2026-04-18)
+- `GET /artist/dashboard` — play stats, follower count, total earnings, songsByStatus
+- `GET /artist/songs` — list artist's own songs (all statuses, paginated)
+- `GET /artist/songs/:id` — get one song (must own it)
+- `POST /artist/songs` — Multer memoryStorage → S3 upload (audio + cover), create pending song
+- `PATCH /artist/songs/:id` — update song metadata (title, albumId, genreId, bpm, mood, key, year, lyricsUrl)
+- `DELETE /artist/songs/:id` — delete pending/rejected song + S3 cleanup
+- `GET /artist/albums` — list own albums
+- `POST /artist/albums` — create album with optional cover
+- Email notification to all admins on new song (fire-and-forget)
+- **Tables:** songs, albums
+- **Tests:** 8 backend unit tests (dashboard, songs CRUD, album)
+- **See:** `implement/module_6_1_artist.md`
 
-#### Module 6.2: Admin Module
-- `GET /admin/pending-songs`
-- `PATCH /admin/songs/:id/review` — approve/reject with optional reason, email artist
-- `GET/PATCH /admin/users/:id/status` — ban/unban users
-- `DELETE /admin/songs/:id`
-- `GET /admin/stats`
-- Role middleware (admin only)
-- **Tests:** approve sets status=published, reject triggers email to artist
+#### Module 6.2: Admin Module ✅ COMPLETED (2026-04-18)
+- `GET /admin/stats` — userCount, songCount, pendingCount, artistCount
+- `GET /admin/pending-songs` — paginated list of pending songs with artist info
+- `PATCH /admin/songs/:id/review` — approve/reject + SongApprovalLog + email artist
+- `DELETE /admin/songs/:id` — hard delete with approval log cleanup
+- `GET /admin/users` — paginated user list with role/search filter
+- `PATCH /admin/users/:id/status` — ban/unban (admin role protected)
+- Role middleware: admin only
+- **Tables:** songs, song_approval_logs, users
+- **Tests:** 10 backend unit tests (review approve/reject, ban/unban, stats, delete)
+- **See:** `implement/module_6_2_admin.md`
 
 ---
 

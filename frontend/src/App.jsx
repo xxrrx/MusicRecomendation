@@ -18,6 +18,8 @@ import LikedSongsPage from './pages/LikedSongsPage';
 import FollowingPage from './pages/FollowingPage';
 import SearchPage from './pages/SearchPage';
 import ChartsPage from './pages/ChartsPage';
+import ArtistDashboardPage from './pages/ArtistDashboardPage';
+import AdminPanelPage from './pages/AdminPanelPage';
 
 const queryClient = new QueryClient();
 
@@ -136,6 +138,28 @@ function App() {
               <WithLayout>
                 <ChartsPage />
               </WithLayout>
+            }
+          />
+
+          <Route
+            path="/artist/dashboard"
+            element={
+              <ProtectedRoute>
+                <WithLayout>
+                  <ArtistDashboardPage />
+                </WithLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <WithLayout>
+                  <AdminPanelPage />
+                </WithLayout>
+              </ProtectedRoute>
             }
           />
 
