@@ -1,6 +1,7 @@
 const prisma = require('../../shared/config/database');
 const redis = require('../../shared/config/redis');
 const { createError } = require('../../shared/utils/response.helper');
+const { resolveS3Url } = require('../../shared/utils/s3.helper');
 
 const CACHE_TTL = 3600; // 1 hour in seconds
 
@@ -32,13 +33,13 @@ function formatSong(song) {
     mood: song.mood,
     key: song.key,
     year: song.year,
-    coverUrl: song.coverUrl,
+    coverUrl: resolveS3Url(song.coverUrl),
     playCount: song.playCount,
     status: song.status,
     artist: song.artist
-      ? { id: song.artist.id, displayName: song.artist.user.displayName, avatarUrl: song.artist.user.avatarUrl }
+      ? { id: song.artist.id, displayName: song.artist.user.displayName, avatarUrl: resolveS3Url(song.artist.user.avatarUrl) }
       : null,
-    album: song.album || null,
+    album: song.album ? { ...song.album, coverUrl: resolveS3Url(song.album.coverUrl) } : null,
     genre: song.genre || null,
   };
 }
@@ -111,12 +112,12 @@ async function getAlbumById(id) {
   const result = {
     id: album.id,
     title: album.title,
-    coverUrl: album.coverUrl,
+    coverUrl: resolveS3Url(album.coverUrl),
     year: album.year,
     artist: {
       id: album.artist.id,
       displayName: album.artist.user.displayName,
-      avatarUrl: album.artist.user.avatarUrl,
+      avatarUrl: resolveS3Url(album.artist.user.avatarUrl),
     },
     songs: album.songs.map(formatSong),
   };
@@ -160,17 +161,15 @@ async function getArtistById(id) {
 
   if (!artist) throw createError('Artist not found', 404, 'NOT_FOUND');
 
-  const totalPlayCount = playCountAgg._sum.playCount || 0;
-
   const result = {
     id: artist.id,
     displayName: artist.user.displayName,
-    avatarUrl: artist.user.avatarUrl,
+    avatarUrl: resolveS3Url(artist.user.avatarUrl),
     bio: artist.bio,
-    totalPlayCount,
+    totalPlayCount: playCountAgg._sum.playCount || 0,
     followerCount: artist._count.followers,
     songs: artist.songs.map(formatSong),
-    albums: artist.albums,
+    albums: artist.albums.map((a) => ({ ...a, coverUrl: resolveS3Url(a.coverUrl) })),
   };
 
   await redis.set(cacheKey, JSON.stringify(result), 'EX', CACHE_TTL);

@@ -1,3 +1,124 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Base resets & design-system defaults ─────────────────────────────────── */
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: #0a0a0a;
+    color: #fff;
+    font-family: 'Inter', 'Circular', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #404040; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #606060; }
+}
+
+/* ── Reusable component classes ───────────────────────────────────────────── */
+@layer components {
+  /* Card surface */
+  .sp-card {
+    @apply bg-sp-card rounded-card p-4 transition-colors duration-150 hover:bg-sp-hover;
+  }
+
+  /* Pill button — primary green */
+  .btn-primary {
+    @apply bg-sp-green text-black font-bold px-8 py-3 rounded-pill
+           hover:bg-sp-green-light hover:scale-[1.02]
+           active:scale-[0.98] transition-all duration-150
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100;
+  }
+
+  /* Pill button — secondary outline */
+  .btn-secondary {
+    @apply border border-sp-gray text-white font-semibold px-6 py-2.5 rounded-pill
+           hover:border-white hover:scale-[1.02]
+           active:scale-[0.98] transition-all duration-150;
+  }
+
+  /* Ghost icon button */
+  .btn-icon {
+    @apply text-sp-gray hover:text-white transition-colors duration-150
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-sp-green rounded-full;
+  }
+
+  /* Text input */
+  .sp-input {
+    @apply w-full bg-[#2a2a2a] border border-sp-border rounded-card px-4 py-3
+           text-white placeholder-sp-gray-dark
+           focus:outline-none focus:border-white focus:bg-[#333]
+           transition-colors duration-150;
+  }
+
+  /* Section heading */
+  .sp-heading {
+    @apply text-white text-2xl font-bold tracking-tight;
+  }
+
+  /* Animated playing bars — used inside SongCard / QueuePanel */
+  .playing-bars {
+    @apply flex items-end gap-[2px] h-4;
+  }
+  .playing-bars span:nth-child(1) { @apply animate-bar1; }
+  .playing-bars span:nth-child(2) { @apply animate-bar2; }
+  .playing-bars span:nth-child(3) { @apply animate-bar3; }
+}
+
+/* ── Custom range slider (volume / seek) ──────────────────────────────────── */
+@layer utilities {
+  .range-sp {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+  }
+  .range-sp::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: #404040;
+  }
+  .range-sp::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    margin-top: -4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .range-sp:hover::-webkit-slider-thumb,
+  .range-sp:focus::-webkit-slider-thumb { opacity: 1; }
+  .range-sp::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: #404040;
+  }
+  .range-sp::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border: none;
+    border-radius: 50%;
+    background: #fff;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .range-sp:hover::-moz-range-thumb { opacity: 1; }
+}

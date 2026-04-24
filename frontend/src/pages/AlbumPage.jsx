@@ -3,6 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchAlbum } from '../lib/musicApi';
 import SongCard from '../components/SongCard';
 
+function fmt(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 export default function AlbumPage() {
   const { id } = useParams();
 
@@ -13,59 +19,88 @@ export default function AlbumPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <p className="text-gray-400">Loading...</p>
+      <div className="flex-1 flex items-center justify-center bg-[#121212]">
+        <div className="w-8 h-8 border-2 border-[#1DB954] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (isError || !album) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <p className="text-red-400">Album not found.</p>
+      <div className="flex-1 flex items-center justify-center bg-[#121212]">
+        <p className="text-[#b3b3b3]">Không tìm thấy album.</p>
       </div>
     );
   }
 
   const totalDuration = album.songs.reduce((sum, s) => sum + s.duration, 0);
   const totalMin = Math.floor(totalDuration / 60);
+  const totalSec = totalDuration % 60;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      {/* Header */}
-      <div className="bg-gray-900 px-6 py-10">
-        <div className="max-w-4xl mx-auto flex items-end gap-6">
+    <div className="min-h-full bg-[#121212] text-white">
+      {/* ── Hero ────────────────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden">
+        {album.coverUrl && (
+          <img
+            src={album.coverUrl}
+            alt=""
+            aria-hidden
+            className="absolute inset-0 w-full h-full object-cover scale-110 blur-3xl opacity-25 pointer-events-none"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#121212]/60 to-[#121212]" />
+
+        <div className="relative z-10 px-8 pt-16 pb-10 flex items-end gap-7">
           {album.coverUrl ? (
             <img
               src={album.coverUrl}
               alt={album.title}
-              className="w-40 h-40 rounded-xl object-cover shadow-xl shrink-0"
+              className="w-44 h-44 rounded-xl object-cover shadow-2xl shrink-0"
             />
           ) : (
-            <div className="w-40 h-40 rounded-xl bg-gray-700 flex items-center justify-center shrink-0">
-              <span className="text-6xl">💿</span>
+            <div className="w-44 h-44 rounded-xl bg-[#282828] flex items-center justify-center shrink-0">
+              <span className="text-7xl">💿</span>
             </div>
           )}
 
-          <div>
-            <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Album</p>
-            <h1 className="text-3xl font-bold">{album.title}</h1>
-            <Link
-              to={`/artists/${album.artist.id}`}
-              className="text-purple-400 hover:underline text-sm mt-1 inline-block"
-            >
-              {album.artist.displayName}
-            </Link>
-            <p className="text-gray-400 text-xs mt-1">
-              {album.year && `${album.year} · `}
-              {album.songs.length} songs · {totalMin} min
-            </p>
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-widest text-[#b3b3b3] mb-2">Album</p>
+            <h1 className="text-4xl font-extrabold leading-tight">{album.title}</h1>
+            <div className="flex items-center gap-2 mt-3 text-sm">
+              {album.artist.avatarUrl && (
+                <img src={album.artist.avatarUrl} alt="" className="w-5 h-5 rounded-full object-cover" />
+              )}
+              <Link
+                to={`/artists/${album.artist.id}`}
+                className="text-white font-semibold hover:underline"
+              >
+                {album.artist.displayName}
+              </Link>
+              {album.year && (
+                <>
+                  <span className="text-[#6a6a6a]">·</span>
+                  <span className="text-[#b3b3b3]">{album.year}</span>
+                </>
+              )}
+              <span className="text-[#6a6a6a]">·</span>
+              <span className="text-[#b3b3b3]">{album.songs.length} bài</span>
+              <span className="text-[#6a6a6a]">·</span>
+              <span className="text-[#b3b3b3]">{totalMin} phút {totalSec} giây</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Song list */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      {/* ── Track list ──────────────────────────────────────────────────── */}
+      <div className="px-8 pb-8">
+        {/* Table header */}
+        <div className="flex items-center gap-3 px-3 py-2 border-b border-[#2a2a2a] mb-2 text-xs uppercase tracking-widest text-[#6a6a6a]">
+          <span className="w-5 text-right">#</span>
+          <span className="w-10 shrink-0" />
+          <span className="flex-1">Tiêu đề</span>
+          <span className="w-10 text-right">Thời lượng</span>
+        </div>
         <div className="space-y-1">
           {album.songs.map((song, i) => (
             <SongCard key={song.id} song={song} rank={i + 1} queue={album.songs} queueIndex={i} />

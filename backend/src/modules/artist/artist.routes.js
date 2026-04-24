@@ -31,5 +31,18 @@ router.delete('/songs/:id', ctrl.deleteSong);
 // Albums
 router.get('/albums', ctrl.getAlbums);
 router.post('/albums', upload.single('cover'), ctrl.createAlbum);
+router.get('/albums/:id', ctrl.getAlbumDetail);
+router.patch('/albums/:id', upload.single('cover'), ctrl.updateAlbum);
+router.delete('/albums/:id', ctrl.deleteAlbum);
+router.post('/albums/:id/songs', ctrl.addSongToAlbum);
+router.delete('/albums/:id/songs/:songId', ctrl.removeSongFromAlbum);
+
+// Analytics
+router.get('/analytics/plays', ctrl.getPlaysOverTime);
+router.get('/analytics/top-songs', ctrl.getTopSongs);
+router.get('/analytics/revenue', ctrl.getRevenue);
+
+// Profile
+router.patch('/profile', upload.single('avatar'), ctrl.updateProfile);
 
 module.exports = router;

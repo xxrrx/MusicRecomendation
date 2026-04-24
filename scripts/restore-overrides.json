@@ -1,0 +1,12 @@
+{
+  "containerOverrides": [
+    {
+      "name": "backend",
+      "command": [
+        "sh",
+        "-c",
+        "apk add --no-cache postgresql-client curl; curl -L -o /tmp/data_dump.sql 'https://s3.us-east-1.amazonaws.com/musicrecommendation.ptit.online/db-backups/data_dump.sql?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAW2PDJN3LJLSY7EHD%2F20260424%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260424T161403Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=cf351f9a4baa1ac4c7aef1672cf4e7279f184e86b7d53353c3da0f4dffcd65ea'; psql $DATABASE_URL -c 'TRUNCATE TABLE \"UserPreference\", \"UserBehavior\", \"PlayHistory\", \"LikedSong\", \"PlaylistSong\", \"SongApprovalLog\", \"Playlist\", \"Song\", \"Album\", \"FollowArtist\", \"Donation\", \"Artist\", \"Genre\", \"User\" CASCADE;'; psql $DATABASE_URL -f /tmp/data_dump.sql"
+      ]
+    }
+  ]
+}

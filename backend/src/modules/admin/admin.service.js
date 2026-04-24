@@ -166,4 +166,72 @@ async function getStats() {
   return { userCount, songCount, pendingCount, artistCount };
 }
 
-module.exports = { getPendingSongs, reviewSong, getUsers, updateUserStatus, deleteSong, getStats };
+// ─── User detail & role ───────────────────────────────────────────────────────
+
+async function getUserDetail(userId) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true, email: true, displayName: true, avatarUrl: true,
+      role: true, isActive: true, isVerified: true, createdAt: true,
+      artist: {
+        select: {
+          id: true, bio: true, totalEarnings: true,
+          _count: { select: { songs: true, followers: true } },
+        },
+      },
+      _count: { select: { likedSongs: true, playlists: true, followings: true } },
+    },
+  });
+  if (!user) throw createError('User not found', 404, 'NOT_FOUND');
+
+  const [recentHistory, behaviorStats] = await Promise.all([
+    prisma.playHistory.findMany({
+      where: { userId },
+      select: {
+        id: true, playedAt: true, durationPlayed: true, completionRate: true,
+        song: { select: { id: true, title: true, coverUrl: true } },
+      },
+      orderBy: { playedAt: 'desc' },
+      take: 10,
+    }),
+    prisma.userBehavior.groupBy({
+      by: ['action'],
+      where: { userId },
+      _count: { id: true },
+    }),
+  ]);
+
+  return {
+    ...user,
+    artist: user.artist ? { ...user.artist, totalEarnings: Number(user.artist.totalEarnings) } : null,
+    recentHistory,
+    behaviorStats: Object.fromEntries(behaviorStats.map((b) => [b.action, b._count.id])),
+  };
+}
+
+async function updateUserRole(userId, { role }) {
+  const validRoles = ['user', 'artist', 'admin'];
+  if (!validRoles.includes(role)) throw createError('Invalid role', 400, 'INVALID_ROLE');
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, role: true } });
+  if (!user) throw createError('User not found', 404, 'NOT_FOUND');
+
+  // Auto-create artist profile when promoting
+  if (role === 'artist' && user.role !== 'artist') {
+    const existing = await prisma.artist.findUnique({ where: { userId }, select: { id: true } });
+    if (!existing) await prisma.artist.create({ data: { userId } });
+  }
+
+  return prisma.user.update({
+    where: { id: userId },
+    data: { role },
+    select: { id: true, email: true, displayName: true, role: true, isActive: true },
+  });
+}
+
+module.exports = {
+  getPendingSongs, reviewSong,
+  getUsers, updateUserStatus, getUserDetail, updateUserRole,
+  deleteSong, getStats,
+};

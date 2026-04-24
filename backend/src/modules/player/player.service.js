@@ -14,8 +14,16 @@ async function getStreamUrl(songId) {
   if (!song) throw createError('Song not found', 404, 'NOT_FOUND');
   if (!song.fileUrl) throw createError('Audio not available', 404, 'AUDIO_NOT_FOUND');
 
-  // fileUrl stored as S3 key (e.g. "audio/uuid.mp3")
-  const url = await getPresignedUrl(song.fileUrl);
+  // fileUrl may be stored as a full S3 URL or just the key (e.g. "songs/xxx.mp3")
+  let s3Key = song.fileUrl;
+  try {
+    const parsed = new URL(song.fileUrl);
+    // Remove leading slash from pathname to get the S3 key
+    s3Key = parsed.pathname.replace(/^\//, '');
+  } catch {
+    // Not a URL — already a plain key
+  }
+  const url = await getPresignedUrl(s3Key);
   return { songId: song.id, title: song.title, url };
 }
 

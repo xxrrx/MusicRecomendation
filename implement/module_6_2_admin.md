@@ -1,98 +1,123 @@
-# Module 6.2 — Admin Module
+# Module 6.2 — Admin Module (Đầy đủ)
 
 **Status:** ✅ COMPLETED (2026-04-18)
 
-## Summary
+---
 
-Admin-only management endpoints and panel UI. Admins can review pending songs (approve/reject), manage user accounts (ban/unban), delete songs, and view platform statistics.
+## Tổng quan
+
+Admin panel đầy đủ với layout riêng (không có PlayerBar, không có sidebar user). Gồm 6 nhóm chức năng chính.
 
 ---
 
-## Backend
+## Backend API
 
-### Routes — `POST /api/admin/*` (auth: admin only)
+Tất cả routes đều yêu cầu `role: admin`. Mount tại `/api/admin`.
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/admin/stats` | Platform stats (users, songs, pending, artists) |
-| GET | `/admin/pending-songs` | Paginated list of songs with `status=pending` |
-| PATCH | `/admin/songs/:id/review` | Approve or reject a pending song |
-| DELETE | `/admin/songs/:id` | Hard delete song + approval logs |
-| GET | `/admin/users` | Paginated user list, filterable by `role` and `search` |
-| PATCH | `/admin/users/:id/status` | Set `isActive` (ban/unban) |
+### Kiểm duyệt nội dung
+| Method | Path | Mô tả |
+|--------|------|-------|
+| GET | `/admin/pending-songs` | Danh sách bài hát chờ duyệt |
+| PATCH | `/admin/songs/:id/review` | Duyệt/từ chối + tạo SongApprovalLog + email nghệ sĩ |
 
-### Files created
+### Quản lý bài hát
+| Method | Path | Mô tả |
+|--------|------|-------|
+| GET | `/admin/songs` | Tất cả bài hát, lọc theo status/search/artistId |
+| GET | `/admin/songs/:id` | Chi tiết + approval logs |
+| PATCH | `/admin/songs/:id` | Sửa metadata + force publish/reject |
+| DELETE | `/admin/songs/:id` | Xóa cứng + approval logs |
 
-- `backend/src/modules/admin/admin.service.js`
-- `backend/src/modules/admin/admin.controller.js`
-- `backend/src/modules/admin/admin.routes.js`
-- `backend/src/shared/utils/email.helper.js` — Added `sendSongReviewEmail`
-- `backend/src/app.js` — Mounted `/api/admin`
+### Quản lý nghệ sĩ
+| Method | Path | Mô tả |
+|--------|------|-------|
+| GET | `/admin/artists` | Danh sách nghệ sĩ, có tìm kiếm |
+| POST | `/admin/users/:id/promote-artist` | Phong cấp user thành artist |
+| PATCH | `/admin/artists/:id` | Sửa bio + displayName |
 
-### Key behaviors
+### Quản lý album
+| Method | Path | Mô tả |
+|--------|------|-------|
+| GET | `/admin/albums` | Danh sách album |
+| GET | `/admin/albums/:id` | Chi tiết album + bài hát |
+| POST | `/admin/albums` | Tạo album mới |
+| PATCH | `/admin/albums/:id` | Sửa thông tin |
+| DELETE | `/admin/albums/:id` | Xóa (songs set albumId=null) |
+| POST | `/admin/albums/:id/songs` | Thêm bài hát vào album |
+| DELETE | `/admin/albums/:id/songs/:songId` | Xóa bài khỏi album |
 
-**Song review:**
-- `PATCH /admin/songs/:id/review` body: `{ action: "approved"|"rejected", reason?: string }`
-- `reason` is required when action is `"rejected"`
-- On approve: sets `status=published`, `publishedAt=now()`
-- On reject: sets `status=rejected`, `rejectionReason=reason`
-- Creates a `SongApprovalLog` record (wrapped in `$transaction`)
-- Emails the artist's email (fire-and-forget)
+### Quản lý playlist chính thức
+| Method | Path | Mô tả |
+|--------|------|-------|
+| GET | `/admin/playlists` | Danh sách playlist (userId=null, isSystem=false) |
+| GET | `/admin/playlists/:id` | Chi tiết + bài hát |
+| POST | `/admin/playlists` | Tạo playlist |
+| PATCH | `/admin/playlists/:id` | Sửa tên/cover |
+| DELETE | `/admin/playlists/:id` | Xóa |
+| POST | `/admin/playlists/:id/songs` | Thêm bài |
+| DELETE | `/admin/playlists/:id/songs/:songId` | Xóa bài |
 
-**User management:**
-- Cannot ban admin-role users (400)
-- `isActive=false` effectively bans the user from the platform
+### Quản lý người dùng
+| Method | Path | Mô tả |
+|--------|------|-------|
+| GET | `/admin/users` | Danh sách user, lọc role/search |
+| GET | `/admin/users/:id` | Chi tiết: profile + play history + behavior stats |
+| PATCH | `/admin/users/:id/status` | Ban/unban |
+| PATCH | `/admin/users/:id/role` | Đổi vai trò (tự tạo Artist profile nếu promote) |
+| GET | `/admin/stats` | Tổng quan platform |
 
-**Stats:**
-- Simple `count()` aggregations — no caching (admin-only, low traffic)
+### Analytics
+| Method | Path | Mô tả |
+|--------|------|-------|
+| GET | `/admin/analytics/overview` | Tổng hợp 30d/7d plays, users mới, tổng doanh thu |
+| GET | `/admin/analytics/top-songs` | Top bài hát theo lượt nghe (`?period=30&limit=10`) |
+| GET | `/admin/analytics/top-artists` | Top nghệ sĩ (`?period=30&limit=10`) |
+| GET | `/admin/analytics/plays` | Lượt nghe theo ngày (`?days=30`) |
+| GET | `/admin/analytics/new-users` | User mới theo ngày (`?days=30`) |
 
-### Tests
+### Donations
+| Method | Path | Mô tả |
+|--------|------|-------|
+| GET | `/admin/donations` | Danh sách giao dịch, lọc status |
+| GET | `/admin/donations/stats` | Thống kê doanh thu theo status/method/top artists |
 
-`backend/tests/unit/admin.service.test.js` — 10 tests
+---
 
-- `getPendingSongs`: paginated results
-- `reviewSong approve`: sets published, creates log
-- `reviewSong reject`: sets rejected with reason
-- `reviewSong reject without reason`: throws 400
-- `reviewSong not pending`: throws 400
-- `reviewSong not found`: throws 404
-- `reviewSong invalid action`: throws 400
-- `updateUserStatus ban/unban`: sets isActive
-- `updateUserStatus admin`: throws 400
-- `deleteSong`: runs transaction, throws 404
+## Files backend
+
+| File | Nội dung |
+|------|---------|
+| `admin.service.js` | Moderation, user management, getUserDetail, updateUserRole |
+| `admin.content.service.js` | Songs/Artists/Albums/Playlists management |
+| `admin.analytics.service.js` | Analytics queries + Donations |
+| `admin.controller.js` | HTTP handlers (import 3 services) |
+| `admin.routes.js` | Tất cả routes |
 
 ---
 
 ## Frontend
 
-### Pages
+### Layout
+- `AdminLayout.jsx` — Sidebar riêng với 5 nhóm nav, không có PlayerBar
+- `PlayerBarWrapper` trong `App.jsx` — tự ẩn khi ở `/admin/*`
 
-- `AdminPanelPage` (`/admin`) — 3-tab UI: Pending Songs | Users | Stats
+### Routes
+| Route | Trang |
+|-------|-------|
+| `/admin` | Duyệt bài hát (PendingSongsPage) |
+| `/admin/songs` | Quản lý bài hát + preview + sửa inline |
+| `/admin/artists` | Quản lý nghệ sĩ + phong cấp user |
+| `/admin/albums` | Quản lý album + thêm/xóa bài hát |
+| `/admin/playlists` | Playlist chính thức + quản lý bài hát |
+| `/admin/users` | Danh sách user + thay đổi role inline |
+| `/admin/users/:id` | Chi tiết user + play history + ban/role |
+| `/admin/analytics` | Top songs/artists + biểu đồ lượt nghe + user mới |
+| `/admin/donations` | Danh sách giao dịch + thống kê doanh thu |
+| `/admin/stats` | Tổng quan số lượng |
 
-### Tabs
-
-| Tab | Content |
-|-----|---------|
-| Pending Songs | Song cards with Approve button and collapsible Reject form with reason input |
-| Users | Table with role, status, Ban/Unban toggle |
-| Stats | 4 stat cards |
-
-### API lib
-
-- `frontend/src/lib/adminApi.js` — getPendingSongs, reviewSong, getUsers, updateUserStatus, adminDeleteSong, getStats
-
-### Navigation
-
-- Sidebar shows **Admin Panel** link for users with role `admin`
-
-### Tests
-
-`frontend/src/tests/admin.test.jsx` — 6 tests
-
-- Renders admin panel with tabs
-- Shows no-pending message
-- Renders pending songs list
-- Approve button calls reviewSong API
-- Reject button shows reason input form
-- Users tab renders table
-- Stats tab renders stat cards
+### Features nổi bật
+- **Preview nhạc**: Click ▶ → gọi `/player/stream/:id` → play inline `<audio>` tag
+- **Sửa bài hát inline**: Mở form ngay trong table row
+- **Bar chart**: Lượt nghe và user mới theo ngày (CSS Tailwind, không cần chart lib)
+- **Role change inline**: Dropdown trực tiếp trong bảng user
+- **Phong cấp artist**: Chọn user từ dropdown → tự động tạo Artist record + đổi role

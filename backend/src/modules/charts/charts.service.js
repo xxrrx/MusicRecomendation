@@ -1,6 +1,7 @@
 const prisma = require('../../shared/config/database');
 const redis = require('../../shared/config/redis');
 const { createError } = require('../../shared/utils/response.helper');
+const { resolveS3Url } = require('../../shared/utils/s3.helper');
 
 const CACHE_TTL = 3600; // 1 hour
 
@@ -45,10 +46,10 @@ function formatSong(song) {
     id: song.id,
     title: song.title,
     duration: song.duration,
-    coverUrl: song.coverUrl,
+    coverUrl: resolveS3Url(song.coverUrl),
     playCount: song.playCount,
     artist: song.artist
-      ? { id: song.artist.id, displayName: song.artist.user.displayName, avatarUrl: song.artist.user.avatarUrl }
+      ? { id: song.artist.id, displayName: song.artist.user.displayName, avatarUrl: resolveS3Url(song.artist.user.avatarUrl) }
       : null,
     album: song.album || null,
     genre: song.genre || null,
@@ -105,10 +106,7 @@ async function computeAndCacheChart(type) {
 
   // Preserve ranked order
   const songMap = new Map(songsRaw.map((s) => [s.id, s]));
-  const songs = songIds
-    .map((id) => songMap.get(id))
-    .filter(Boolean)
-    .map(formatSong);
+  const songs = songIds.map((id) => songMap.get(id)).filter(Boolean).map(formatSong);
 
   const chartData = {
     type,

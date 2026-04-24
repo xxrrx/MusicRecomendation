@@ -38,6 +38,20 @@ async function register({ email, password, displayName, role }) {
   return { message: 'Verification email sent', userId: user.id };
 }
 
+async function resendVerification({ email }) {
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) throw createError('Email not found', 404, 'NOT_FOUND');
+  if (user.isVerified) throw createError('Email already verified', 400, 'ALREADY_VERIFIED');
+
+  const token = crypto.randomBytes(32).toString('hex');
+  await redis.set(verifyKey(token), user.id, 'EX', VERIFY_TOKEN_TTL);
+
+  const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${token}`;
+  await sendVerificationEmail(email, verifyUrl);
+
+  return { message: 'Verification email resent' };
+}
+
 async function verifyEmail({ token }) {
   const userId = await redis.get(verifyKey(token));
   if (!userId) throw createError('Token expired or invalid', 400, 'INVALID_TOKEN');

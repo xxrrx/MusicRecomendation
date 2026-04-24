@@ -1,5 +1,6 @@
 const prisma = require('../../shared/config/database');
 const redis = require('../../shared/config/redis');
+const { resolveS3Url } = require('../../shared/utils/s3.helper');
 
 const CACHE_TTL = 1800; // 30 minutes
 
@@ -20,10 +21,10 @@ function formatSong(song) {
     id: song.id,
     title: song.title,
     duration: song.duration,
-    coverUrl: song.coverUrl,
+    coverUrl: resolveS3Url(song.coverUrl),
     playCount: song.playCount,
     artist: song.artist
-      ? { id: song.artist.id, displayName: song.artist.user.displayName, avatarUrl: song.artist.user.avatarUrl }
+      ? { id: song.artist.id, displayName: song.artist.user.displayName, avatarUrl: resolveS3Url(song.artist.user.avatarUrl) }
       : null,
     album: song.album || null,
     genre: song.genre || null,
@@ -107,18 +108,16 @@ async function search({ q, type = 'all', limit = 10 }) {
   result.artists = artists.map((a) => ({
     id: a.id,
     displayName: a.user.displayName,
-    avatarUrl: a.user.avatarUrl,
+    avatarUrl: resolveS3Url(a.user.avatarUrl),
     bio: a.bio,
     followerCount: a._count.followers,
   }));
   result.albums = albums.map((a) => ({
     id: a.id,
     title: a.title,
-    coverUrl: a.coverUrl,
+    coverUrl: resolveS3Url(a.coverUrl),
     year: a.year,
-    artist: a.artist
-      ? { id: a.artist.id, displayName: a.artist.user.displayName }
-      : null,
+    artist: a.artist ? { id: a.artist.id, displayName: a.artist.user.displayName } : null,
   }));
 
   await redis.set(cacheKey, JSON.stringify(result), 'EX', CACHE_TTL);

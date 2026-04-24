@@ -8,3 +8,10 @@ __pycache__/
 *.pyc
 .venv/
 *.egg-info/
+
+# Terraform - secrets & large generated files
+terraform/**/.terraform/
+terraform/**/terraform.tfstate
+terraform/**/terraform.tfstate.backup
+terraform/**/.terraform.lock.hcl
+terraform/**/terraform.tfvars

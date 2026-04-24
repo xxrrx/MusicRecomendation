@@ -1,5 +1,6 @@
 const prisma = require('../../shared/config/database');
 const { createError } = require('../../shared/utils/response.helper');
+const { resolveS3Url } = require('../../shared/utils/s3.helper');
 
 // ─── Shared selects ───────────────────────────────────────────────────────────
 
@@ -20,10 +21,10 @@ function formatSong(song) {
     id: song.id,
     title: song.title,
     duration: song.duration,
-    coverUrl: song.coverUrl,
+    coverUrl: resolveS3Url(song.coverUrl),
     playCount: song.playCount,
     artist: song.artist
-      ? { id: song.artist.id, displayName: song.artist.user.displayName, avatarUrl: song.artist.user.avatarUrl }
+      ? { id: song.artist.id, displayName: song.artist.user.displayName, avatarUrl: resolveS3Url(song.artist.user.avatarUrl) }
       : null,
     album: song.album || null,
     genre: song.genre || null,
@@ -34,7 +35,7 @@ function formatPlaylist(playlist) {
   return {
     id: playlist.id,
     title: playlist.title,
-    coverUrl: playlist.coverUrl || null,
+    coverUrl: resolveS3Url(playlist.coverUrl) || null,
     songCount: playlist.songs ? playlist.songs.length : playlist._count?.songs ?? 0,
     songs: playlist.songs
       ? playlist.songs.map((ps) => ({ ...formatSong(ps.song), position: ps.position, addedAt: ps.addedAt }))

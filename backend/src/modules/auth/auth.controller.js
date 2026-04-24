@@ -12,6 +12,15 @@ async function register(req, res, next) {
   }
 }
 
+async function resendVerification(req, res, next) {
+  try {
+    const result = await authService.resendVerification(req.body);
+    success(res, result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function verifyEmail(req, res, next) {
   try {
     validateVerifyEmail(req.body);
@@ -52,4 +61,4 @@ async function refreshToken(req, res, next) {
   }
 }
 
-module.exports = { register, verifyEmail, login, logout, refreshToken };
+module.exports = { register, resendVerification, verifyEmail, login, logout, refreshToken };

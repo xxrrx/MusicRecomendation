@@ -26,11 +26,15 @@ services:
       - /app/node_modules
     env_file:
       - ./backend/.env
+    environment:
+      - AI_SERVICE_URL=http://ai_service:8000
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+      ai_service:
+        condition: service_started
 
   ai_service:
     build:

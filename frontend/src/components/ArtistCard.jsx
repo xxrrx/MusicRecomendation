@@ -1,6 +1,11 @@
 import { Link } from 'react-router-dom';
 
 /**
+ * ArtistCard
+ * ──────────
+ * Vertical card with a circular avatar, artist name and follower count.
+ * Hover: subtle background highlight + slight scale on the avatar.
+ *
  * Props:
  *   artist — { id, displayName, avatarUrl, followerCount }
  */
@@ -8,24 +13,35 @@ export default function ArtistCard({ artist }) {
   return (
     <Link
       to={`/artists/${artist.id}`}
-      className="flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-gray-800 transition text-center"
+      className="flex flex-col items-center gap-3 p-4 rounded-card-lg
+                 hover:bg-sp-hover transition-colors duration-150 text-center group"
     >
-      {artist.avatarUrl ? (
-        <img
-          src={artist.avatarUrl}
-          alt={artist.displayName}
-          className="w-20 h-20 rounded-full object-cover"
-        />
-      ) : (
-        <div className="w-20 h-20 rounded-full bg-gray-700 flex items-center justify-center">
-          <span className="text-3xl text-gray-400">🎤</span>
-        </div>
-      )}
+      {/* Circular avatar */}
+      <div className="relative">
+        {artist.avatarUrl ? (
+          <img
+            src={artist.avatarUrl}
+            alt={artist.displayName}
+            className="w-20 h-20 rounded-full object-cover
+                       group-hover:scale-105 transition-transform duration-150 shadow-card"
+          />
+        ) : (
+          <div className="w-20 h-20 rounded-full bg-sp-hover flex items-center justify-center
+                          group-hover:scale-105 transition-transform duration-150 shadow-card">
+            {/* Microphone placeholder */}
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-sp-gray">
+              <path d="M8.25 4.5a3.75 3.75 0 1 1 7.5 0v8.25a3.75 3.75 0 1 1-7.5 0V4.5z" />
+              <path d="M6 10.5a.75.75 0 0 1 .75.75v1.5a5.25 5.25 0 1 0 10.5 0v-1.5a.75.75 0 0 1 1.5 0v1.5a6.751 6.751 0 0 1-6 6.709v2.291h3a.75.75 0 0 1 0 1.5h-7.5a.75.75 0 0 1 0-1.5h3v-2.291a6.751 6.751 0 0 1-6-6.709v-1.5A.75.75 0 0 1 6 10.5z" />
+            </svg>
+          </div>
+        )}
+      </div>
 
+      {/* Name + follower count */}
       <div>
-        <p className="text-white font-semibold">{artist.displayName}</p>
+        <p className="text-white text-sm font-semibold truncate">{artist.displayName}</p>
         {artist.followerCount != null && (
-          <p className="text-gray-400 text-xs mt-0.5">
+          <p className="text-sp-gray text-xs mt-0.5">
             {artist.followerCount.toLocaleString()} followers
           </p>
         )}

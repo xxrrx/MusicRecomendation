@@ -69,4 +69,21 @@ async function deleteFromS3(key) {
   await getS3Client().send(command);
 }
 
-module.exports = { getPresignedUrl, uploadToS3, deleteFromS3 };
+/**
+ * Resolve a coverUrl/avatarUrl value to a full public S3 URL.
+ * If already a full URL, return as-is. If a plain key, build the public URL.
+ * @param {string|null} urlOrKey
+ * @returns {string|null}
+ */
+function resolveS3Url(urlOrKey) {
+  if (!urlOrKey) return null;
+  try {
+    new URL(urlOrKey);
+    return urlOrKey; // already a full URL
+  } catch {
+    if (!env.AWS_S3_BUCKET) return `http://localhost:9000/${urlOrKey}`;
+    return `https://${env.AWS_S3_BUCKET}.s3.${env.AWS_REGION}.amazonaws.com/${urlOrKey}`;
+  }
+}
+
+module.exports = { getPresignedUrl, uploadToS3, deleteFromS3, resolveS3Url };

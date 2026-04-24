@@ -291,18 +291,38 @@ frontend/
 
 ### PHASE 7 — AI Service (Week 8)
 
+#### Module 7.0: Data Seeding (Prerequisites — phải làm trước)
+- **Nguồn dữ liệu:** Jamendo API (CC licensed, miễn phí, không cần upload S3)
+- **Mục tiêu:** 300 bài hát với đầy đủ metadata cho AI training
+- **Không seed:** lyrics (bỏ qua, xử lý ở Phase 9)
+- **Script:** `backend/prisma/seed-jamendo.js`
+- **Dữ liệu được seed:**
+  - ~30 Artists (User account + Artist profile, role = 'artist', isVerified = true)
+  - ~30 Albums (cover từ Jamendo URL trực tiếp)
+  - ~10 Genres (map sang genres có sẵn trong DB)
+  - ~300 Songs (status = 'published', fileUrl = Jamendo MP3 URL, coverUrl = Jamendo image URL, bpm từ API, mood + key generate ngẫu nhiên)
+  - ~20 Users thường (để test AI)
+  - ~1500 PlayHistory records (simulate cold/warm/hot users)
+  - ~800 UserBehavior records (like/dislike/skip)
+  - ~20 UserPreference records (genre weights từ onboarding)
+- **API cần:** Jamendo `client_id` (đăng ký miễn phí tại developer.jamendo.com)
+- **Không cần:** Musixmatch, S3 upload, file audio local
+- **Lưu ý về `key` field:** Generate ngẫu nhiên từ 12 keys (C, C#, D, ... B) — Jamendo không cung cấp field này
+- **See:** `implement/module_7_0_data_seeding.md`
+
 #### Module 7.1: Content-Based Model
-- Load published songs from PostgreSQL
+- Load published songs từ PostgreSQL
 - Feature engineering: one-hot encode genre/mood/key + normalize BPM
+- NULL fields → fill bằng mean của column
 - Cosine similarity matrix
 - `GET /radio?song_id=X` — return top N similar songs
 - **Tests:** similarity scores are reasonable, response matches expected schema
 
 #### Module 7.2: Collaborative Filtering (SVD)
-- Build user-item interaction matrix from user_behaviors + play_history
-- TruncatedSVD with 50 components
+- Build user-item interaction matrix từ user_behaviors + play_history
+- TruncatedSVD với 50 components
 - Interaction scores: like=+2, dislike=−2, skip=−1, partial plays=+0.5 to +1.5
-- Hybrid engine with cold-start logic:
+- Hybrid engine với cold-start logic:
   - <10 plays → 100% content-based
   - 10–50 plays → 40% content + 60% collaborative
   - \>50 plays → 20% content + 80% collaborative
@@ -310,24 +330,25 @@ frontend/
 - **Tests:** cold-start uses content-only, warm users use hybrid correctly
 
 #### Module 7.3: Recommendation Backend Integration
-- `GET /recommendations` — call AI `/recommend`, enrich with song metadata
-- `GET /recommendations/radio` — call AI `/radio`, enrich with metadata
-- Fallback to top charts if AI service is unavailable
+- `GET /recommendations` — call AI `/recommend`, enrich với song metadata
+- `GET /recommendations/radio` — call AI `/radio`, enrich với metadata
+- Fallback to top charts nếu AI service unavailable
 - Redis cache 15 minutes, invalidated on new behavior event
 - **Tests:** fallback works when AI is down, cache invalidation triggers correctly
 
 ---
 
-### PHASE 8 — Donation (Week 9)
+### PHASE 8 — Donation (Week 9) ✅ COMPLETED (2026-04-24)
 
 #### Module 8.1: Donation
-- `POST /donations/initiate` — create VNPay redirect URL or Stripe clientSecret
-- `POST /donations/webhook/vnpay` — verify signature, update donation status
-- `POST /donations/webhook/stripe` — verify signature, update donation status
-- Update `artists.total_earnings` on successful payment
-- `GET /donations/history`
+- `POST /donations/initiate` — create Stripe PaymentIntent (clientSecret) hoặc VNPay redirect URL
+- `POST /donations/confirm` — verify Stripe PaymentIntent sau khi frontend confirm
+- `GET /donations/vnpay-return` — VNPay redirect về, verify HMAC-SHA512 & cập nhật DB
+- `GET /donations/history` — lịch sử donate của user
+- Update `artists.totalEarnings` on successful payment (prisma transaction)
 - **Tables:** donations, artists
-- **Tests:** webhook signature validation, status updated correctly, earnings incremented
+- **Frontend:** DonatePage, DonationResultPage, nút Donate trên ArtistPage
+- **Dependencies:** stripe (backend), @stripe/react-stripe-js + @stripe/stripe-js (frontend)
 
 ---
 
